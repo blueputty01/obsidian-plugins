@@ -1,0 +1,74 @@
+{
+    "name": "obsidian-git",
+    "version": "2.32.0",
+    "description": "Integrate Git version control with automatic backup and other advanced features in Obsidian.md",
+    "main": "main.js",
+    "scripts": {
+        "dev": "node esbuild.config.mjs dev",
+        "build": "node esbuild.config.mjs production",
+        "release": "standard-version",
+        "lint": "eslint src",
+        "format": "prettier --check src",
+        "tsc": "tsc --noEmit",
+        "svelte": "svelte-check",
+        "all": "pnpm run tsc && pnpm run svelte && pnpm run format && pnpm run lint"
+    },
+    "keywords": [],
+    "author": "Vinzent03",
+    "license": "MIT",
+    "standard-version": {
+        "t": ""
+    },
+    "engines": {
+        "node": ">=18",
+        "pnpm": ">=9"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.14.0",
+        "@types/debug": "^4.1.12",
+        "@types/deep-equal": "^1.0.4",
+        "@types/diff": "^5.2.3",
+        "@types/node": "^22.7.5",
+        "@typescript-eslint/parser": "^8.8.1",
+        "esbuild": "^0.24.0",
+        "esbuild-svelte": "^0.8.2",
+        "eslint": "^9.12.0",
+        "eslint-plugin-svelte": "^2.45.1",
+        "obsidian": "^1.7.2",
+        "prettier": "3.3.2",
+        "prettier-plugin-svelte": "^3.2.7",
+        "scss": "^0.2.4",
+        "standard-version": "^9.5.0",
+        "svelte-check": "^4.0.5",
+        "svelte-preprocess": "^6.0.3",
+        "svelte-eslint-parser": "^0.43.0",
+        "tslib": "^2.7.0",
+        "typescript": "^5.6.3",
+        "typescript-eslint": "^8.8.1"
+    },
+    "dependencies": {
+        "@codemirror/commands": "^6.7.1",
+        "@codemirror/merge": "^6.7.5",
+        "@codemirror/search": "^6.5.7",
+        "@codemirror/state": "^6.4.1",
+        "@codemirror/view": "^6.34.2",
+        "buffer": "^6.0.3",
+        "codemirror": "^6.0.1",
+        "css-color-converter": "^2.0.0",
+        "debug": "^4.3.7",
+        "deep-equal": "^2.2.3",
+        "diff": "^7.0.0",
+        "diff2html": "^3.4.48",
+        "isomorphic-git": "^1.27.1",
+        "js-sha256": "^0.9.0",
+        "obsidian-community-lib": "github:Vinzent03/obsidian-community-lib#upgrade",
+        "simple-git": "^3.27.0",
+        "supports-color": "^9.4.0",
+        "svelte": "^5.0.0"
+    },
+    "moduleFileExtensions": [
+        "js",
+        "ts",
+        "svelte"
+    ]
+}
