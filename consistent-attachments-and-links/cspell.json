@@ -1,0 +1,42 @@
+{
+  "version": "0.2",
+  "ignorePaths": [
+    "dist",
+    "node_modules",
+    "tsconfig.tsbuildinfo"
+  ],
+  "dictionaryDefinitions": [],
+  "dictionaries": [],
+  "words": [
+    "Backlink",
+    "Backlinks",
+    "collab",
+    "creatordate",
+    "Dmitry",
+    "hotreload",
+    "Jado",
+    "jinder",
+    "jiyee",
+    "Kishore",
+    "lezer",
+    "Linkpath",
+    "Linktext",
+    "mairas",
+    "mnaoumov",
+    "Naumov",
+    "outfile",
+    "postversion",
+    "preversion",
+    "Savosh",
+    "subfolders",
+    "tsbuildinfo",
+    "Varma",
+    "wikilink",
+    "Wikilinks",
+    "wilikinks",
+    "Yrusobad"
+  ],
+  "ignoreWords": [],
+  "import": [],
+  "enabled": true
+}
