@@ -27,8 +27,8 @@ async function electronGetPageTitle(url: string): Promise<string> {
       width: 1000,
       height: 600,
       webPreferences: {
-        webSecurity: false,
-        nodeIntegration: true,
+        // webSecurity: false,
+        // nodeIntegration: true,
         images: false,
       },
       show: false,
