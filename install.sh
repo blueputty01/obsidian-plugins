@@ -20,10 +20,10 @@ mv dist/build/* $OBSIDIAN_DIR/plugins/consistent-attachments-and-links
 
 cd ../git
 pnpm i
-pnpm run release
+pnpm run build
 mkdir -p $OBSIDIAN_DIR/plugins/git
 rm -rf $OBSIDIAN_DIR/plugins/git/*
-mv main.js $OBSIDIAN_DIR/plugins/git
+mv main.js $OBSIDIAN_DIR/plugins/git/main.js
 cp manifest.json $OBSIDIAN_DIR/plugins/git
 cd ../
 
