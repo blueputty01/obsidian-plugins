@@ -1,0 +1,145 @@
+/*! /* @settings
+name: Quick Explorer
+id: quick-explorer
+settings:
+    -   id: qe-obsidian-title
+        title: Obsidian Title (Vault+Version)
+        description: What should happen to the Obsidian title text?
+        type: class-select
+        default: qe-title-right
+        options:
+            - label: Show it on the right
+              value: qe-title-right
+            - label: Show it in the center
+              value: qe-title-center
+            - label: Hide it entirely
+              value: qe-title-hide
+
+    -   id: qe-hide-breadcrumbs
+        title: Hide Quick Explorer
+        description: Hide quick explorer (and use tab titlebar breadcrumbs on 0.16)
+        type: class-toggle
+*/
+
+.titlebar-button-container.mod-left {
+    opacity: 1;
+}
+
+// Push our replacement to the right
+body:not(.qe-title-center):not(.qe-title-hide) .titlebar-text.qe-replacement {
+    text-align: right;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+
+body.qe-title-hide .titlebar-text.qe-replacement {
+    display: none;
+}
+
+// On Obsidian 0.16, conform to local style
+body.obsidian-themepocalypse:not(.qe-hide-breadcrumbs) {
+    #quick-explorer {
+        display: inherit;
+        .explorable {
+            display: inherit;
+        }
+    }
+}
+
+// Hide QE if requested
+body.qe-hide-breadcrumbs #quick-explorer { display: none; }
+
+
+// Put QE on status bar, far to the left, if native or hidden frame
+body.is-frameless.is-hidden-frameless:not(.qe-hide-breadcrumbs) .status-bar,
+body:not(.is-frameless):not(.qe-hide-breadcrumbs) .status-bar {
+    position: static;
+    .status-bar-item.left-region {
+        order: -9999;
+        flex-grow: 1;
+    }
+}
+
+#quick-explorer {
+    display: inline-block;
+    padding-left: 10px;
+    padding-right: 10px;
+
+    // Ensure we overlay the main title text if the window's too narrow
+    z-index: var(--layer-cover);
+    background-color: var(--background-translucent) !important;
+
+    .explorable {
+        font-size: var(--font-ui-small, 12px);
+        opacity: 0.75;
+        .status-bar & {
+            font-size: var(--status-bar-font-size, var(--font-ui-small, 12px));
+            opacity: 1;
+        }
+        cursor: pointer;
+        padding: 0;
+        display: unset;
+
+        &.selected, &:hover {
+            background-color: var(--interactive-accent-hover);
+            color: var(--text-on-accent);
+            opacity: 1;
+        }
+    }
+    .explorable-separator::before {
+        content: "\00a0/\00a0"
+    }
+}
+
+.menu.qe-popup-menu ~ .popover.hover-popover {
+    z-index: var(--layer-menu);
+}
+
+.qe-popup-menu .menu-item:not(.is-disabled):not(.is-label) {
+    display: flex;
+    align-items: center;    // vertically center icon, filename, and extension
+    &.selected {
+        background-color: var(--interactive-accent-hover);
+    }
+    &:hover:not(.selected) {
+        background-color: var(--background-primary);
+        color: var(--text-normal);
+        .menu-item-icon { color: var(--text-muted); }
+    }
+
+    // Expand the title so the extension tag will be right-aligned
+    .menu-item-title { flex-grow: 1; }
+
+    .nav-file-tag {
+        margin-left: 1.5em;  // minimum distance from title
+        opacity: 0.5;        // prevent distraction
+        background-color: transparent;
+        &.qe-file-count {
+            font-size: 75%;
+        }
+    }
+
+    &:hover, &.selected {
+        color: var(--text-on-accent);
+        .menu-item-icon {
+            color: var(--text-on-accent);
+        }
+        .nav-file-tag {
+            opacity: 1;     // make it more visible for the current item
+        }
+    }
+}
+
+/* Built-in Breadcrumbs (0.16.3+) */
+.view-header-title-parent::before {
+    content: "/";
+    padding: 2px 1px;
+    color: var(--text-faint);
+}
+
+.view-header-breadcrumb.is-exploring,
+.view-header-title-parent.is-exploring::before
+{
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+}

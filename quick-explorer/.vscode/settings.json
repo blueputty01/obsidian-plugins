@@ -1,0 +1,7 @@
+{
+  "search.exclude": {
+    "main.js": true,
+    "**/.yarn": true,
+    "**/.pnp.*": true
+  }
+}

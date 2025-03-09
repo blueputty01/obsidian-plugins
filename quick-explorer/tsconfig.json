@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "Node16",
+    "target": "es2020",
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
+    "moduleResolution": "nodenext",
+    "allowImportingTsExtensions": true,
+    "jsx": "react",
+    "jsxFactory": "el",
+    "lib": [
+      "dom",
+      "es2020",
+      "scripthost"
+    ]
+  },
+  "include": [
+    "**/*.ts", "**/*.tsx"
+  ]
+}
