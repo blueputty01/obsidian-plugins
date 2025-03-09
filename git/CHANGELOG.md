@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.32.5](///compare/2.32.4...2.32.5) (2025-03-09)
+
 ### [2.32.4](///compare/2.32.3...2.32.4) (2025-03-09)
 
 ### [2.32.3](///compare/2.32.2...2.32.3) (2025-03-09)
