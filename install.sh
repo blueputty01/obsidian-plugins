@@ -1,50 +1,49 @@
 #/bin/bash
 
 OBSIDIAN_DIR=$obsidian/.obsidian
-export OBSIDIAN_PATH=$OBSIDIAN_DIR/themes
 
 cd auto-link-title
 npm i
 npm run build
-mkdir -p $OBSIDIAN_DIR/plugins/auto-link-title
-rm -rf $OBSIDIAN_DIR/plugins/auto-link-title/*
-mv main.js $OBSIDIAN_DIR/plugins/auto-link-title
-cp manifest.json $OBSIDIAN_DIR/plugins/auto-link-title
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/auto-link-title
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv main.js $PLUGIN_DIR/main.js
+cp manifest.json $PLUGIN_DIR/manifest.json
 
 cd ../consistent-attachments-and-links
 npm i
 npm run build
-mkdir -p $OBSIDIAN_DIR/plugins/consistent-attachments-and-links
-rm -rf $OBSIDIAN_DIR/plugins/consistent-attachments-and-links/*
-mv dist/build/* $OBSIDIAN_DIR/plugins/consistent-attachments-and-links
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/consistent-attachments-and-links
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv dist/build/* $PLUGIN_DIR
 
 cd ../git
 pnpm i
 pnpm run build
-mkdir -p $OBSIDIAN_DIR/plugins/git
-rm -rf $OBSIDIAN_DIR/plugins/git/*
-mv main.js $OBSIDIAN_DIR/plugins/git/main.js
-cp manifest.json $OBSIDIAN_DIR/plugins/git
-cd ../
-
-cd minimal
-npm i
-npx grunt
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/obsidian-git
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv main.js $PLUGIN_DIR/main.js
+cp manifest.json $PLUGIN_DIR/manifest.json
 cd ../
 
 cd quick-explorer
 pnpm i
 pnpm run build
-mkdir -p $OBSIDIAN_DIR/plugins/quick-explorer
-rm -rf $OBSIDIAN_DIR/plugins/quick-eplorer/*
-mv dist/* $OBSIDIAN_DIR/plugins/quick-explorer
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/quick-explorer
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv dist/* $PLUGIN_DIR
 cd ../
 
 cd templater
 pnpm i
 pnpm run build
-mkdir -p $OBSIDIAN_DIR/plugins/templater
-rm -rf $OBSIDIAN_DIR/plugins/templater/*
-mv main.js $OBSIDIAN_DIR/plugins/templater
-cp manifest.json $OBSIDIAN_DIR/plugins/templater
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/templater
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv main.js $PLUGIN_DIR/main.js
+cp manifest.json $PLUGIN_DIR/manifest.json
 cd ../
