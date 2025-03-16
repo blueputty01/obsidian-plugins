@@ -47,3 +47,13 @@ mkdir -p $PLUGIN_DIR
 mv main.js $PLUGIN_DIR/main.js
 cp manifest.json $PLUGIN_DIR/manifest.json
 cd ../
+
+cd vimrc
+npm i
+npm run build
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/vimrc
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv main.js $PLUGIN_DIR/main.js
+cp manifest.json $PLUGIN_DIR/manifest.json
+cd ../
