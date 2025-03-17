@@ -1,21 +1,16 @@
 #!/usr/bin/env bash
 
-echo $BASH_VERSION
 # Define the subtrees and their corresponding branches
 declare -A subtrees=(
   ["auto-link-title"]="main",
-  ["consistent-attachments-and-links"]="master",
-  ["git"]="master",
-  ["kanban"]="main",
-  ["quick-explorer"]="master",
-  ["quickadd"]="master",
-  ["templater"]="master",
+  ["consistent-attachments-and-links"]="master"
+  ["git"]="master"
+  ["kanban"]="main"
+  ["quick-explorer"]="master"
+  ["quickadd"]="master"
+  ["templater"]="master"
   ["vimrc"]="master"
 )
-
-for subtree in "${!subtrees[@]}"; do
-  echo "Key: $subtree, Value: ${subtrees[$subtree]}"
-done
 
 # Iterate over the subtrees
 for subtree in "${!subtrees[@]}"; do
@@ -34,4 +29,5 @@ for subtree in "${!subtrees[@]}"; do
   else
     echo "Failed to update subtree '$subtree'."
   fi
+  echo ""
 done
