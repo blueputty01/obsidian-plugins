@@ -30,5 +30,4 @@ Update subtree
 git fetch 'remote-alias' 'branch'
 git subtree pull --prefix 'local-path' 'remote-alias' 'branch' --squash
 ```
-```
 
