@@ -1,6 +1,6 @@
 {
   "name": "consistent-attachments-and-links",
-  "version": "3.24.13",
+  "version": "3.24.14",
   "description": "This plugin ensures the consistency of attachments and links",
   "main": "main.js",
   "scripts": {
@@ -19,9 +19,9 @@
   "license": "MIT",
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.5",
-    "@types/node": "^22.13.5",
+    "@types/node": "^22.13.10",
     "obsidian": "^1.8.7",
-    "obsidian-dev-utils": "^19.6.0",
+    "obsidian-dev-utils": "^19.8.2",
     "obsidian-typings": "^2.35.0"
   },
   "type": "module"
