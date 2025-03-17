@@ -26,6 +26,7 @@ PLUGIN_DIR=$OBSIDIAN_DIR/plugins/obsidian-git
 mkdir -p $PLUGIN_DIR
 # rm -rf $PLUGIN_DIR/*
 mv main.js $PLUGIN_DIR/main.js
+mv styles.css $PLUGIN_DIR/styles.css
 cp manifest.json $PLUGIN_DIR/manifest.json
 cd ../
 
@@ -56,4 +57,14 @@ mkdir -p $PLUGIN_DIR
 # rm -rf $PLUGIN_DIR/*
 mv main.js $PLUGIN_DIR/main.js
 cp manifest.json $PLUGIN_DIR/manifest.json
+cd ../
+
+cd kanban
+yarn
+yarn build
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/kanban
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv main.js $PLUGIN_DIR/main.js
+cp manimest.json $PLUGIN_DIR/manifest.json
 cd ../
