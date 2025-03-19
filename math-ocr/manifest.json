@@ -1,0 +1,10 @@
+{
+  "id": "math-ocr",
+  "name": "Clipboard Math OCR",
+  "version": "1.0.0",
+  "minAppVersion": "0.12.17",
+  "description": "This plugin converts clipboard images to MathJax.",
+  "author": "Alexander Yang",
+  "authorUrl": "https://github.com/blueputty01",
+  "isDesktopOnly": false
+}

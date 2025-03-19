@@ -85,3 +85,13 @@ mv main.js $PLUGIN_DIR
 mv styles.css $PLUGIN_DIR
 cp manifest.json $PLUGIN_DIR
 cd ../
+
+cd math-ocr
+npm i
+npm run build
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/math-ocr
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv main.js $PLUGIN_DIR
+cp manifest.json $PLUGIN_DIR
+cd ../
