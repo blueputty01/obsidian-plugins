@@ -7,6 +7,7 @@ import {
   DEFAULT_SETTINGS,
 } from "./settings";
 import { SimpleTexResponse } from "api";
+import { log } from "console";
 
 const PLUGIN_NAME = "math-ocr";
 
@@ -51,8 +52,7 @@ export default class AutoLinkTitle extends Plugin {
   async startTypeset(editor: Editor): Promise<void> {
     // Generate a unique id for find/replace operations
     const pasteId = this.getPasteId();
-
-    editor.replaceRange(`${pasteId}`, editor.getCursor());
+    editor.replaceRange(pasteId, editor.getCursor());
 
     // Fetch title from site, replace Fetching Title with actual title
     const image = await this.getClipboardImage();
