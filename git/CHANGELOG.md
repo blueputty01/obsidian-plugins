@@ -2,31 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [2.32.13](///compare/2.32.12...2.32.13) (2025-03-09)
+### [2.32.1](https://github.com/Vinzent03/obsidian-git/compare/2.32.0...2.32.1) (2025-03-20)
 
-### [2.32.12](///compare/2.32.11...2.32.12) (2025-03-09)
 
-### [2.32.11](///compare/2.32.10...2.32.11) (2025-03-09)
+### Bug Fixes
 
-### [2.32.10](///compare/2.32.9...2.32.10) (2025-03-09)
-
-### [2.32.9](///compare/2.32.8...2.32.9) (2025-03-09)
-
-### [2.32.8](///compare/2.32.7...2.32.8) (2025-03-09)
-
-### [2.32.7](///compare/2.32.6...2.32.7) (2025-03-09)
-
-### [2.32.6](///compare/2.32.5...2.32.6) (2025-03-09)
-
-### [2.32.5](///compare/2.32.4...2.32.5) (2025-03-09)
-
-### [2.32.4](///compare/2.32.3...2.32.4) (2025-03-09)
-
-### [2.32.3](///compare/2.32.2...2.32.3) (2025-03-09)
-
-### [2.32.2](///compare/2.32.1...2.32.2) (2025-03-09)
-
-### 2.32.1 (2025-03-09)
+* don't reschedule auto commit-and-sync too often ([7f506c7](https://github.com/Vinzent03/obsidian-git/commit/7f506c7d54cc83bebcf14e22207c53e57a55add0)), closes [#875](https://github.com/Vinzent03/obsidian-git/issues/875)
+* don't reset auto commit-and-sync timer while still running ([bd5b942](https://github.com/Vinzent03/obsidian-git/commit/bd5b9423eb6f90dce2e078cffa7591a4634bfc87))
+* properly hide md extension ([6494ccf](https://github.com/Vinzent03/obsidian-git/commit/6494ccf0375d3790202e803864d2f6cbd46d1269)), closes [#873](https://github.com/Vinzent03/obsidian-git/issues/873)
+* **settings:** remove ability to enter non-number in number input boxes ([#880](https://github.com/Vinzent03/obsidian-git/issues/880)) ([18e966e](https://github.com/Vinzent03/obsidian-git/commit/18e966e3905814b4c7ba9918466529998a45e26e)), closes [#878](https://github.com/Vinzent03/obsidian-git/issues/878)
 
 ## [2.32.0](https://github.com/Vinzent03/obsidian-git/compare/2.31.1...2.32.0) (2025-03-05)
 
