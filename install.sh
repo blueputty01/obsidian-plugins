@@ -2,8 +2,6 @@
 set -e
 set -o pipefail
 
-OBSIDIAN_DIR=$obsidian/.obsidian
-
 cd auto-link-title
 npm i
 npm run build
@@ -93,5 +91,16 @@ PLUGIN_DIR=$OBSIDIAN_DIR/plugins/math-ocr
 mkdir -p $PLUGIN_DIR
 # rm -rf $PLUGIN_DIR/*
 mv main.js $PLUGIN_DIR
+cp manifest.json $PLUGIN_DIR
+cd ../
+
+cd remotely-save
+npm i
+npm run build
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/remotely-save
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv main.js $PLUGIN_DIR
+cp styles.css $PLUGIN_DIR
 cp manifest.json $PLUGIN_DIR
 cd ../
