@@ -118,13 +118,15 @@ export default class AutoLinkTitle extends Plugin {
 
       if (!parsedResponse.status) {
         console.error(parsedResponse);
-        return "";
+        return "error from api";
       }
 
-      return parsedResponse.res.latex;
+      const latex = parsedResponse.res.latex;
+      latex.replace(/\u00a0/g, " "); // Replace non-breaking spaces with regular spaces
+      return latex.trim();
     } catch (error) {
       console.error(error);
-      return "";
+      return "error while processing";
     }
   }
 
