@@ -11,6 +11,7 @@ declare -A subtrees=(
   ["remotely-save"]="master"
   ["templater"]="master"
   ["vimrc"]="master"
+  ["unlinked"]="main"
 )
 
 # Iterate over the subtrees

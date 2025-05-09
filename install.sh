@@ -104,3 +104,13 @@ mv main.js $PLUGIN_DIR
 cp styles.css $PLUGIN_DIR
 cp manifest.json $PLUGIN_DIR
 cd ../
+
+cd unlinked
+npm i
+npm run build
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/unlinked
+mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
+mv main.js $PLUGIN_DIR
+cp manifest.json $PLUGIN_DIR
+cd ../
