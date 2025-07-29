@@ -1,0 +1,23 @@
+{
+  "name": "obsidian-protect-files",
+  "version": "1.0.0",
+  "description": "Closes open notes under a certain directory and collapses the file structure after a timeout. Opening those files would require a password.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "rollup --config rollup.config.js -w",
+    "build": "rollup --config rollup.config.js --environment BUILD:production"
+  },
+  "keywords": [],
+  "author": "Roo, the AI Software Engineer",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^18.0.0",
+    "@rollup/plugin-node-resolve": "^11.2.1",
+    "@rollup/plugin-typescript": "^8.2.1",
+    "@types/node": "^14.14.37",
+    "obsidian": "^1.4.11",
+    "rollup": "^2.32.1",
+    "tslib": "^2.2.0",
+    "typescript": "^5.2.2"
+  }
+}

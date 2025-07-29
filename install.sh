@@ -114,3 +114,12 @@ mkdir -p $PLUGIN_DIR
 mv main.js $PLUGIN_DIR
 cp manifest.json $PLUGIN_DIR
 cd ../
+
+cd protect-files
+npm i
+npm run build
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/protect-files
+mkdir -p $PLUGIN_DIR
+mv main.js $PLUGIN_DIR
+cp manifest.json $PLUGIN_DIR
+cd ../

@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-protect-files",
+  "name": "Protect Files",
+  "version": "1.0.0",
+  "minAppVersion": "0.12.17",
+  "description": "Closes open notes under a certain directory and collapses the file structure after a timeout. Opening those files would require a password.",
+  "author": "Alexander Yang",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
