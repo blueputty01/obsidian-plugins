@@ -115,11 +115,22 @@ mv main.js $PLUGIN_DIR
 cp manifest.json $PLUGIN_DIR
 cd ../
 
-cd protect-files
+# cd protect-files
+# npm i
+# npm run build
+# PLUGIN_DIR=$OBSIDIAN_DIR/plugins/protect-files
+# mkdir -p $PLUGIN_DIR
+# mv main.js $PLUGIN_DIR
+# cp manifest.json $PLUGIN_DIR
+# cd ../
+
+cd copy-as-html
 npm i
 npm run build
-PLUGIN_DIR=$OBSIDIAN_DIR/plugins/protect-files
+PLUGIN_DIR=$OBSIDIAN_DIR/plugins/copy-as-html
 mkdir -p $PLUGIN_DIR
+# rm -rf $PLUGIN_DIR/*
 mv main.js $PLUGIN_DIR
 cp manifest.json $PLUGIN_DIR
+cp styles.css $PLUGIN_DIR
 cd ../
