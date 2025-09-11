@@ -1,6 +1,6 @@
 # Obsidian Plugins 
 
-I maintain my own forks of plugins I use in Obsidian
+I maintain forks of all the plugins I use and ocassionally write my own from scratch.
 
 # Usage 
 
