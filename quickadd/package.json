@@ -31,7 +31,7 @@
     "esbuild-plugin-copy": "^2.1.1",
     "esbuild-svelte": "^0.7.3",
     "eslint": "^8.40.0",
-    "jsdom": "^22.0.0",
+    "jsdom": "^27.0.0",
     "obsidian": "^1.5.7-1",
     "semantic-release": "^21.0.2",
     "svelte": "^3.59.1",
@@ -117,5 +117,6 @@
         }
       ]
     ]
-  }
+  },
+  "packageManager": "pnpm@9.15.5+sha1.cb1f6372ef64e2ba352f2f46325adead1c99ff8f"
 }
