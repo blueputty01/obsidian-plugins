@@ -59,6 +59,27 @@ export default class AutoLinkTitle extends Plugin {
 
     // Fetch title from site, replace Fetching Title with actual title
     const image = await this.getClipboardImage();
+
+    if (!image) {
+      const text = editor.getValue();
+      const start = text.indexOf(pasteId);
+      if (start < 0) {
+        console.log(
+          `Unable to find text "${pasteId}" in current editor, bailing out`
+        );
+      } else {
+        const end = start + pasteId.length;
+        const startPos = EditorExtensions.getEditorPositionFromIndex(
+          text,
+          start
+        );
+        const endPos = EditorExtensions.getEditorPositionFromIndex(text, end);
+
+        editor.replaceRange('', startPos, endPos);
+      }
+      return;
+    }
+
     const title = await this.uploadImageToAPI(image);
     const escapedTitle = this.singleLineWrap(title);
 
