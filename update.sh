@@ -2,7 +2,7 @@
 
 # Define the subtrees and their corresponding branches
 declare -A subtrees=(
-  ["auto-link-title"]="main",
+  ["auto-link-title"]="main"
   ["consistent-attachments-and-links"]="master"
   ["git"]="master"
   ["kanban"]="main"
@@ -28,6 +28,8 @@ for subtree in "${!subtrees[@]}"; do
 
   if [ $? -eq 0 ]; then
     echo "Subtree '$subtree' updated successfully."
+    echo "Reinstalling '$subtree'..."
+    ./install.sh "$subtree"
   else
     echo "Failed to update subtree '$subtree'."
   fi
