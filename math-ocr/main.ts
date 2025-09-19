@@ -104,23 +104,37 @@ export default class AutoLinkTitle extends Plugin {
   }
 
   public async uploadImageToAPI(blob: Blob): Promise<string> {
+    const apiEndpoint = `https://server.simpletex.net/api/latex_ocr`;
+
+    const fieldName = 'file';
+    const boundary = uuidv4().replace(/-/g, '');
+    const chunk =
+      `--${boundary}\r\n` +
+      `Content-Disposition: form-data; name="${fieldName}";`;
+    const value =
+      `filename="image.jpg"\r\n` + `Content-Type: ${blob.type}\r\n\r\n`;
+    const endSequence = `\r\n--${boundary}--\r\n`;
+
     try {
-      const apiEndpoint = `https://server.simpletex.net/api/latex_ocr`;
+      const chunkBytes = Array.from(chunk, (c) => c.charCodeAt(0));
+      const valueBytes = Array.from(value, (c) => c.charCodeAt(0));
+      const blobBuffer = new Uint8Array(await blob.arrayBuffer());
+      const endBytes = Array.from(endSequence, (c) => c.charCodeAt(0));
 
-      const fieldName = 'file';
-      const boundary = uuidv4().replace(/-/g, '');
-      const chunk =
-        `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="${fieldName}";`;
-      const value =
-        `filename="image.jpg"\r\n` + `Content-Type: ${blob.type}\r\n\r\n`;
-      const endSequence = `\r\n--${boundary}--\r\n`;
-
-      const bytes = [];
-      bytes.push(...chunk.split('').map((c) => c.charCodeAt(0)));
-      bytes.push(...value.split('').map((c) => c.charCodeAt(0)));
-      bytes.push(...new Uint8Array(await blob.arrayBuffer()));
-      bytes.push(...endSequence.split('').map((c) => c.charCodeAt(0)));
+      // Create a single array with enough capacity
+      const bytes = new Uint8Array(
+        chunkBytes.length +
+          valueBytes.length +
+          blobBuffer.length +
+          endBytes.length
+      );
+      bytes.set(chunkBytes, 0);
+      bytes.set(valueBytes, chunkBytes.length);
+      bytes.set(blobBuffer, chunkBytes.length + valueBytes.length);
+      bytes.set(
+        endBytes,
+        chunkBytes.length + valueBytes.length + blobBuffer.length
+      );
 
       const requestPayload = {
         method: 'POST',
@@ -128,7 +142,7 @@ export default class AutoLinkTitle extends Plugin {
           'Content-Type': `multipart/form-data; boundary=${boundary}`,
           token: this.settings.simpletexAPIKey,
         },
-        body: new Uint8Array(bytes).buffer,
+        body: bytes.buffer,
       };
 
       const rawResponse = await request({
