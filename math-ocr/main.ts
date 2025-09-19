@@ -1,14 +1,14 @@
-import { EditorExtensions } from "editor-enhancements";
-import { v4 as uuidv4 } from "uuid";
-import { Editor, Plugin, Notice, request } from "obsidian";
+import { EditorExtensions } from 'editor-enhancements';
+import { v4 as uuidv4 } from 'uuid';
+import { Editor, Plugin, Notice, request } from 'obsidian';
 import {
   MathOCRSettingTab,
   MathOCRSettings,
   DEFAULT_SETTINGS,
-} from "./settings";
-import { SimpleTexResponse } from "api";
+} from './settings';
+import { SimpleTexResponse } from 'api';
 
-const PLUGIN_NAME = "math-ocr";
+const PLUGIN_NAME = 'math-ocr';
 
 export default class AutoLinkTitle extends Plugin {
   settings: MathOCRSettings;
@@ -19,13 +19,13 @@ export default class AutoLinkTitle extends Plugin {
     await this.loadSettings();
 
     this.addCommand({
-      id: "convert-clip-to-mathjax",
-      name: "Convert clipboard to MathJax",
+      id: 'convert-clip-to-mathjax',
+      name: 'Convert clipboard to MathJax',
       editorCallback: (editor) => this.startTypeset(editor),
       hotkeys: [
         {
-          modifiers: ["Mod", "Shift"],
-          key: "c",
+          modifiers: ['Mod', 'Shift'],
+          key: 'c',
         },
       ],
     });
@@ -37,14 +37,14 @@ export default class AutoLinkTitle extends Plugin {
     try {
       const clipboardContents = await navigator.clipboard.read();
       for (const item of clipboardContents) {
-        if (!item.types.includes("image/png")) {
-          throw new Error("Clipboard does not contain PNG image data.");
+        if (!item.types.includes('image/png')) {
+          throw new Error('Clipboard does not contain PNG image data.');
         }
-        const blob = await item.getType("image/png");
+        const blob = await item.getType('image/png');
         return blob;
       }
     } catch (error) {
-      new Notice("Error reading image from clipboard.");
+      new Notice('Error reading image from clipboard.');
     }
   }
 
@@ -54,7 +54,7 @@ export default class AutoLinkTitle extends Plugin {
     editor.replaceRange(pasteId, editor.getCursor());
     editor.setCursor(
       editor.getCursor().line,
-      editor.getCursor().ch + pasteId.length,
+      editor.getCursor().ch + pasteId.length
     );
 
     // Fetch title from site, replace Fetching Title with actual title
@@ -67,7 +67,7 @@ export default class AutoLinkTitle extends Plugin {
     const start = text.indexOf(pasteId);
     if (start < 0) {
       console.log(
-        `Unable to find text "${pasteId}" in current editor, bailing out`,
+        `Unable to find text "${pasteId}" in current editor, bailing out`
       );
     } else {
       const end = start + pasteId.length;
@@ -86,8 +86,8 @@ export default class AutoLinkTitle extends Plugin {
     try {
       const apiEndpoint = `https://server.simpletex.net/api/latex_ocr`;
 
-      const fieldName = "file";
-      const boundary = uuidv4().replace(/-/g, "");
+      const fieldName = 'file';
+      const boundary = uuidv4().replace(/-/g, '');
       const chunk =
         `--${boundary}\r\n` +
         `Content-Disposition: form-data; name="${fieldName}";`;
@@ -96,15 +96,15 @@ export default class AutoLinkTitle extends Plugin {
       const endSequence = `\r\n--${boundary}--\r\n`;
 
       const bytes = [];
-      bytes.push(...chunk.split("").map((c) => c.charCodeAt(0)));
-      bytes.push(...value.split("").map((c) => c.charCodeAt(0)));
+      bytes.push(...chunk.split('').map((c) => c.charCodeAt(0)));
+      bytes.push(...value.split('').map((c) => c.charCodeAt(0)));
       bytes.push(...new Uint8Array(await blob.arrayBuffer()));
-      bytes.push(...endSequence.split("").map((c) => c.charCodeAt(0)));
+      bytes.push(...endSequence.split('').map((c) => c.charCodeAt(0)));
 
       const requestPayload = {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
           token: this.settings.simpletexAPIKey,
         },
         body: new Uint8Array(bytes).buffer,
@@ -118,20 +118,20 @@ export default class AutoLinkTitle extends Plugin {
 
       if (!parsedResponse.status) {
         console.error(parsedResponse);
-        return "error from api";
+        return 'error from api';
       }
 
       const latex = parsedResponse.res.latex;
-      latex.replace(/\u00a0/g, " "); // Replace non-breaking spaces with regular spaces
+      latex.replace(/\u00a0/g, ' '); // Replace non-breaking spaces with regular spaces
       return latex.trim();
     } catch (error) {
       console.error(error);
-      return "error while processing";
+      return 'error while processing';
     }
   }
 
   private getPasteId(): string {
-    var base = "$\\textrm{loading...}$";
+    var base = '$\\textrm{loading...}$';
     if (this.settings.useBetterPasteId) {
       return this.getBetterPasteId(base);
     } else {
@@ -143,8 +143,8 @@ export default class AutoLinkTitle extends Plugin {
     // After every character, add 0, 1 or 2 invisible characters
     // so that to the user it looks just like the base string.
     // The number of combinations is 3^14 = 4782969
-    let result = "";
-    var invisibleCharacter = "\u200B";
+    let result = '';
+    var invisibleCharacter = '\u200B';
     var maxInvisibleCharacters = 2;
     for (var i = 0; i < base.length; i++) {
       var count = Math.floor(Math.random() * (maxInvisibleCharacters + 1));
@@ -155,8 +155,8 @@ export default class AutoLinkTitle extends Plugin {
 
   // Custom hashid by @shabegom
   private createBlockHash(): string {
-    let result = "";
-    var characters = "abcdefghijklmnopqrstuvwxyz0123456789";
+    let result = '';
+    var characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
     var charactersLength = characters.length;
     for (var i = 0; i < 4; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
