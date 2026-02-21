@@ -12,7 +12,6 @@ export OBSIDIAN_DIR=$obsidian/.obsidian
 ./install.sh kanban
 ./install.sh quickadd
 ./install.sh math-ocr
-./install.sh remotely-save
 ./install.sh unlinked
 ./install.sh copy-as-html
 
@@ -26,6 +25,5 @@ export OBSIDIAN_DIR=$class_notes/.obsidian
 ./install.sh kanban
 ./install.sh quickadd
 ./install.sh math-ocr
-./install.sh remotely-save
 ./install.sh unlinked
 ./install.sh copy-as-html

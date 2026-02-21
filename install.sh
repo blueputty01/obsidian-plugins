@@ -108,18 +108,6 @@ install_quickadd() {
   cd ../
 }
 
-install_remotely-save() {
-  cd remotely-save
-  npm i
-  npm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/remotely-save
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  cp styles.css $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
-}
-
 install_templater() {
   cd templater
   pnpm i

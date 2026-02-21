@@ -8,7 +8,6 @@ declare -A subtrees=(
   ["kanban"]="main"
   ["quick-explorer"]="master"
   ["quickadd"]="master"
-  ["remotely-save"]="master"
   ["templater"]="master"
   ["vimrc"]="master"
   ["unlinked"]="main"
