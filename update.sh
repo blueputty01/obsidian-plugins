@@ -29,7 +29,7 @@ for subtree in "${!subtrees[@]}"; do
   if [ $? -eq 0 ]; then
     echo "Subtree '$subtree' updated successfully."
     echo "Reinstalling '$subtree'..."
-    ./install.sh "$subtree"
+    # ./install.sh "$subtree"
   else
     echo "Failed to update subtree '$subtree'."
   fi
