@@ -8,10 +8,11 @@ import type { GenerateMarkdownLinkOptions } from 'obsidian-dev-utils/obsidian/Li
 import {
   App,
   normalizePath,
+  resolveSubpath,
   TFile
 } from 'obsidian';
 import { noop } from 'obsidian-dev-utils/Function';
-import { normalizeOptionalProperties } from 'obsidian-dev-utils/Object';
+import { normalizeOptionalProperties } from 'obsidian-dev-utils/ObjectUtils';
 import { applyFileChanges } from 'obsidian-dev-utils/obsidian/FileChange';
 import {
   getFileOrNull,
@@ -20,6 +21,8 @@ import {
 import {
   extractLinkFile,
   generateMarkdownLink,
+  LinkPathStyle,
+  LinkStyle,
   splitSubpath,
   testWikilink,
   updateLinksInFile
@@ -34,9 +37,12 @@ import {
   dirname,
   join
 } from 'obsidian-dev-utils/Path';
-import { trimStart } from 'obsidian-dev-utils/String';
+import {
+  isFrontmatterLinkCache,
+  isReferenceCache
+} from 'obsidian-typings/implementations';
 
-import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
+import type { Plugin } from './Plugin.ts';
 
 export interface LinksAndEmbedsChangedInfo {
   embeds: ReferenceChangeInfo[];
@@ -53,12 +59,12 @@ export interface ReferenceChangeInfo {
   old: ReferenceCache;
 }
 
-export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
-  public constructor(private title: string) {
+export class ConsistencyCheckResult extends Map<string, Reference[]> {
+  public constructor(private readonly title: string) {
     super();
   }
 
-  public add(notePath: string, link: ReferenceCache): void {
+  public add(notePath: string, link: Reference): void {
     if (!this.has(notePath)) {
       this.set(notePath, []);
     }
@@ -70,7 +76,7 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
 
   public override toString(app: App, reportPath: string): string {
     if (this.size > 0) {
-      let str = `# ${this.title} (${this.size.toString()} files)\n`;
+      let str = `# ${this.title} (${String(this.size)} files)\n`;
       for (const notePath of this.keys()) {
         const note = getFileOrNull(app, notePath);
         if (!note) {
@@ -83,7 +89,11 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
         });
         str += `${linkStr}:\n`;
         for (const link of this.get(notePath) ?? []) {
-          str += `- (line ${(link.position.start.line + 1).toString()}): \`${link.link}\`\n`;
+          if (isReferenceCache(link)) {
+            str += `- (line ${String(link.position.start.line + 1)}): \`${link.link}\`\n`;
+          } else if (isFrontmatterLinkCache(link)) {
+            str += `- (key ${link.key}): \`${link.link}\`\n`;
+          }
         }
         str += '\n\n';
       }
@@ -95,7 +105,7 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
 
 export class LinksHandler {
   public constructor(
-    private plugin: ConsistentAttachmentsAndLinksPlugin
+    private readonly plugin: Plugin
   ) {
     noop();
   }
@@ -105,7 +115,8 @@ export class LinksHandler {
     badLinks: ConsistencyCheckResult,
     badEmbeds: ConsistencyCheckResult,
     wikiLinks: ConsistencyCheckResult,
-    wikiEmbeds: ConsistencyCheckResult
+    wikiEmbeds: ConsistencyCheckResult,
+    badFrontmatterLinks: ConsistencyCheckResult
   ): Promise<void> {
     if (this.plugin.settings.isPathIgnored(note.path)) {
       return;
@@ -117,6 +128,7 @@ export class LinksHandler {
     }
     const links = cache.links ?? [];
     const embeds = cache.embeds ?? [];
+    const frontmatterLinks = cache.frontmatterLinks ?? [];
 
     for (const link of links) {
       if (!(await this.isValidLink(link, note.path))) {
@@ -137,14 +149,20 @@ export class LinksHandler {
         wikiEmbeds.add(note.path, embed);
       }
     }
+
+    for (const frontmatterLink of frontmatterLinks) {
+      if (!(await this.isValidLink(frontmatterLink, note.path))) {
+        badFrontmatterLinks.add(note.path, frontmatterLink);
+      }
+    }
   }
 
-  public async convertAllNoteEmbedsPathsToRelative(notePath: string): Promise<ReferenceChangeInfo[]> {
-    return await this.convertAllNoteRefPathsToRelative(notePath, true);
+  public async convertAllNoteEmbedsPathsToRelative(notePath: string, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
+    return await this.convertAllNoteRefPathsToRelative(notePath, true, abortSignal);
   }
 
-  public async convertAllNoteLinksPathsToRelative(notePath: string): Promise<ReferenceChangeInfo[]> {
-    return await this.convertAllNoteRefPathsToRelative(notePath, false);
+  public async convertAllNoteLinksPathsToRelative(notePath: string, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
+    return await this.convertAllNoteRefPathsToRelative(notePath, false, abortSignal);
   }
 
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
@@ -164,7 +182,7 @@ export class LinksHandler {
     return fullPath;
   }
 
-  public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean): Promise<number> {
+  public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean, abortSignal: AbortSignal): Promise<number> {
     if (this.plugin.settings.isPathIgnored(notePath)) {
       return 0;
     }
@@ -176,6 +194,7 @@ export class LinksHandler {
     }
 
     const cache = await getCacheSafe(this.plugin.app, noteFile);
+    abortSignal.throwIfAborted();
     if (!cache) {
       return 0;
     }
@@ -184,8 +203,8 @@ export class LinksHandler {
     const result = links.filter((link) => testWikilink(link.original)).length;
     await updateLinksInFile({
       app: this.plugin.app,
+      linkStyle: LinkStyle.Markdown,
       newSourcePathOrFile: noteFile,
-      shouldForceMarkdownLinks: true,
       shouldUpdateEmbedOnlyLinks: embedOnlyLinks
     });
     return result;
@@ -210,7 +229,7 @@ export class LinksHandler {
     await this.updateLinks(note, note.path, pathChangeMap);
   }
 
-  private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean): Promise<ReferenceChangeInfo[]> {
+  private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
     if (this.plugin.settings.isPathIgnored(notePath)) {
       return [];
     }
@@ -222,8 +241,14 @@ export class LinksHandler {
 
     const changedRefs: ReferenceChangeInfo[] = [];
 
-    await applyFileChanges(this.plugin.app, note, async () => {
+    await applyFileChanges(this.plugin.app, note, async (abortSignal2, content) => {
       const cache = await getCacheSafe(this.plugin.app, note);
+      abortSignal2.throwIfAborted();
+      const cachedContent = await this.plugin.app.vault.cachedRead(note);
+      abortSignal2.throwIfAborted();
+      if (content !== cachedContent) {
+        return null;
+      }
       if (!cache) {
         return [];
       }
@@ -231,23 +256,18 @@ export class LinksHandler {
       const changes: FileChange[] = [];
 
       for (const ref of refs) {
-        const change = {
-          endIndex: ref.position.end.offset,
-          newContent: this.convertLink({
-            forceRelativePath: true,
-            link: ref,
-            note,
-            oldNotePath: notePath
-          }),
-          oldContent: ref.original,
-          startIndex: ref.position.start.offset
-        };
-        changes.push(change);
-        changedRefs.push({ newLink: change.newContent, old: ref });
+        const newContent = this.convertLink({
+          forceRelativePath: true,
+          link: ref,
+          note,
+          oldNotePath: notePath
+        });
+        changes.push(referenceToFileChange(ref, newContent));
+        changedRefs.push({ newLink: newContent, old: ref });
       }
 
       return changes;
-    });
+    }, { abortSignal });
 
     return changedRefs;
   }
@@ -285,15 +305,15 @@ export class LinksHandler {
     return generateMarkdownLink(normalizeOptionalProperties<GenerateMarkdownLinkOptions>({
       alias,
       app: this.plugin.app,
+      linkPathStyle: forceRelativePath ? LinkPathStyle.RelativePathToTheSource : LinkPathStyle.ObsidianSettingsDefault,
       originalLink: link.original,
-      shouldForceRelativePath: forceRelativePath,
       sourcePathOrFile: note.path,
       subpath,
       targetPathOrFile
     }));
   }
 
-  private async isValidLink(link: ReferenceCache, notePath: string): Promise<boolean> {
+  private async isValidLink(link: Reference, notePath: string): Promise<boolean> {
     const { linkPath, subpath } = splitSubpath(link.link);
 
     let fullLinkPath: string;
@@ -332,18 +352,19 @@ export class LinksHandler {
       return false;
     }
 
-    const BLOCK_PREFIX = '#^';
-    if (subpath.startsWith(BLOCK_PREFIX)) {
-      return Object.keys(cache.blocks ?? {}).includes(trimStart(subpath, BLOCK_PREFIX));
-    }
-
-    const HEADING_PREFIX = '#';
-    return (cache.headings ?? []).map((h) => h.heading.replaceAll(HEADING_PREFIX, ' ')).includes(trimStart(subpath, HEADING_PREFIX));
+    return !!resolveSubpath(cache, subpath);
   }
 
   private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {
-    await applyFileChanges(this.plugin.app, note, async () => {
+    await applyFileChanges(this.plugin.app, note, async (abortSignal, content) => {
+      abortSignal.throwIfAborted();
       const cache = await getCacheSafe(this.plugin.app, note);
+      abortSignal.throwIfAborted();
+      const cachedContent = await this.plugin.app.vault.cachedRead(note);
+      abortSignal.throwIfAborted();
+      if (content !== cachedContent) {
+        return null;
+      }
       if (!cache) {
         return [];
       }
