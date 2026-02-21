@@ -22,6 +22,7 @@ for subtree in "${!subtrees[@]}"; do
 
   # Fetch the latest changes from the remote
   git fetch "$subtree" "$branch"
+  git checkout main
 
   # Pull the changes into the subtree
   git subtree pull --prefix "$subtree" "$subtree" "$branch" --squash
