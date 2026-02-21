@@ -12,8 +12,8 @@ importers:
         specifier: ^1.2
         version: 1.2.1
       '@ophidian/core':
-        specifier: 0.0.24
-        version: 0.0.24(@codemirror/state@6.5.2)(@codemirror/view@6.36.4)
+        specifier: ophidian-lib/core
+        version: https://codeload.github.com/ophidian-lib/core/tar.gz/81d7d1463c75f7b2feebfc56adee430dc7d700f1(obsidian@1.3.5(@codemirror/state@6.5.2)(@codemirror/view@6.36.4))(uneventful@0.0.10)
       monkey-around:
         specifier: ^3
         version: 3.0.0
@@ -23,6 +23,9 @@ importers:
       redom:
         specifier: ^3.27.1
         version: 3.29.1
+      uneventful:
+        specifier: ^0.0.10
+        version: 0.0.10
 
 packages:
 
@@ -186,11 +189,12 @@ packages:
   '@ophidian/build@1.2.1':
     resolution: {integrity: sha512-ulefYLGwlWmsP5WgkOunujhU57dB5slENQ7VvwFh0h0Yk6id4Osg3jN0yONtB9gF6awfjzfK4OxzfOhmuzWx7g==}
 
-  '@ophidian/core@0.0.24':
-    resolution: {integrity: sha512-VaHJsM0YNhLT8NTap6Dw/gnHgdei94WuyzHTHg9K/PBCOau+gWtBQUs7+TS+/QQ8obUjAmqzcguI5QtZY5vNNQ==}
-
-  '@preact/signals-core@1.8.0':
-    resolution: {integrity: sha512-OBvUsRZqNmjzCZXWLxkZfhcgT+Fk8DDcT/8vD6a1xhDemodyy87UJRJfASMuSD8FaAIeGgGm85ydXhm7lr4fyA==}
+  '@ophidian/core@https://codeload.github.com/ophidian-lib/core/tar.gz/81d7d1463c75f7b2feebfc56adee430dc7d700f1':
+    resolution: {tarball: https://codeload.github.com/ophidian-lib/core/tar.gz/81d7d1463c75f7b2feebfc56adee430dc7d700f1}
+    version: 0.0.24
+    peerDependencies:
+      obsidian: 1.3.5
+      uneventful: ^0.0.10
 
   '@types/codemirror@5.60.8':
     resolution: {integrity: sha512-VjFgDF/eB+Aklcy15TtOTLQeMjTo07k7KAjql8OK5Dirr7a6sJY4T1uVBDuTVG9VEmn1uUsohOpYnVfgC6/jyw==}
@@ -543,6 +547,9 @@ packages:
   to-use@0.3.3:
     resolution: {integrity: sha512-i5hrYhcDyrjl4tF2EvZnmL8VAMdMYnMFeX1bIF0ekn2gKgs76UhZcHt+hLIUKh0fIii+Ix6uUp5W6yYlU5+Z8A==}
 
+  uneventful@0.0.10:
+    resolution: {integrity: sha512-uSgjcmhgH8tqwT8fe8iVIitUbfZfmha7Xxi2cu/ZpJsvl+iQtYfFPjF/tA/s+Co8pbIo08jZh70Kww9PraCSAg==}
+
   universalify@2.0.1:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
@@ -552,9 +559,6 @@ packages:
 
   w3c-keyname@2.2.8:
     resolution: {integrity: sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ==}
-
-  wonka@6.3.5:
-    resolution: {integrity: sha512-SSil+ecw6B4/Dm7Pf2sAshKQ5hWFvfyGlfPbEd6A14dOH6VDjrmbY86u6nZvy9omGwwIPFR8V41+of1EezgoUw==}
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
@@ -666,20 +670,14 @@ snapshots:
       monkey-around: 2.3.0
       sass: 1.47.0
 
-  '@ophidian/core@0.0.24(@codemirror/state@6.5.2)(@codemirror/view@6.36.4)':
+  '@ophidian/core@https://codeload.github.com/ophidian-lib/core/tar.gz/81d7d1463c75f7b2feebfc56adee430dc7d700f1(obsidian@1.3.5(@codemirror/state@6.5.2)(@codemirror/view@6.36.4))(uneventful@0.0.10)':
     dependencies:
-      '@preact/signals-core': 1.8.0
       defaults: 2.0.2
       i18next: 20.6.1
       monkey-around: 3.0.0
       obsidian: 1.3.5(@codemirror/state@6.5.2)(@codemirror/view@6.36.4)
       to-use: 0.3.3
-      wonka: 6.3.5
-    transitivePeerDependencies:
-      - '@codemirror/state'
-      - '@codemirror/view'
-
-  '@preact/signals-core@1.8.0': {}
+      uneventful: 0.0.10
 
   '@types/codemirror@5.60.8':
     dependencies:
@@ -1055,12 +1053,12 @@ snapshots:
 
   to-use@0.3.3: {}
 
+  uneventful@0.0.10: {}
+
   universalify@2.0.1: {}
 
   util-deprecate@1.0.2: {}
 
   w3c-keyname@2.2.8: {}
-
-  wonka@6.3.5: {}
 
   wrappy@1.0.2: {}
