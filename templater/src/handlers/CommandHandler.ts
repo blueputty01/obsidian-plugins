@@ -91,9 +91,19 @@ export class CommandHandler {
         this.remove_template_hotkey(old_template);
 
         if (new_template) {
+            // Determine started index based on templates folder
+            const template_start_index = this.plugin.settings.templates_folder ?
+                this.plugin.settings.templates_folder.length + 1 :
+                0;
+
+            const new_template_name = new_template.slice(
+                template_start_index,
+                -3
+            );
+
             this.plugin.addCommand({
                 id: new_template,
-                name: `Insert ${new_template}`,
+                name: `Insert ${new_template_name}`,
                 icon: "templater-icon",
                 callback: () => {
                     const template = errorWrapperSync(
@@ -110,7 +120,7 @@ export class CommandHandler {
             });
             this.plugin.addCommand({
                 id: `create-${new_template}`,
-                name: `Create ${new_template}`,
+                name: `Create ${new_template_name}`,
                 icon: "templater-icon",
                 callback: () => {
                     const template = errorWrapperSync(

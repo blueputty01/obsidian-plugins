@@ -209,7 +209,7 @@ description = "Whether to open or not the newly created file. Warning: if you us
 
 [[tp.file.functions.create_new.args]]
 name = "folder"
-description = """The folder to put the new file in, defaults to Obsidian's default location. If you want the file to appear in a different folder, specify it with `"PATH/TO/FOLDERNAME"` or `app.vault.getAbstractFileByPath(\"PATH/TO/FOLDERNAME\")`."""
+description = """The folder to put the new file in, defaults to Obsidian's default location. If you want the file to appear in a different folder, specify it with `"PATH/TO/FOLDERNAME"` or `tp.app.vault.getAbstractFileByPath(\"PATH/TO/FOLDERNAME\")`."""
 
 [[tp.file.functions.create_new.examples]]
 name = "File creation"
@@ -233,7 +233,7 @@ example = """<%* await tp.file.create_new("MyFileContent", "MyFilename", false, 
 
 [[tp.file.functions.create_new.examples]]
 name = "File creation in specified folder with TFolder"
-example = """<%* await tp.file.create_new("MyFileContent", "MyFilename", false, app.vault.getAbstractFileByPath("MyFolder")) %>"""
+example = """<%* await tp.file.create_new("MyFileContent", "MyFilename", false, tp.app.vault.getAbstractFileByPath("MyFolder")) %>"""
 
 [[tp.file.functions.create_new.examples]]
 name = "File creation and append link to current note"
@@ -351,19 +351,19 @@ description = """The link to the file to include, e.g. `"[[MyFile]]"`, or a TFil
 
 [[tp.file.functions.include.examples]]
 name = "File include"
-example = """<% tp.file.include("[[Template1]]") %>"""
+example = """<% await tp.file.include("[[Template1]]") %>"""
 
 [[tp.file.functions.include.examples]]
 name = "File include TFile"
-example = """<% tp.file.include(tp.file.find_tfile("MyFile")) %>"""
+example = """<% await tp.file.include(tp.file.find_tfile("MyFile")) %>"""
 
 [[tp.file.functions.include.examples]]
 name = "File include section"
-example = """<% tp.file.include("[[MyFile#Section1]]") %>"""
+example = """<% await tp.file.include("[[MyFile#Section1]]") %>"""
 
 [[tp.file.functions.include.examples]]
 name = "File include block"
-example = """<% tp.file.include("[[MyFile#^block1]]") %>"""
+example = """<% await tp.file.include("[[MyFile#^block1]]") %>"""
 
 [tp.file.functions.last_modified_date]
 name = "last_modified_date"
@@ -397,11 +397,11 @@ description = "The file to move, defaults to the current file."
 
 [[tp.file.functions.move.examples]]
 name = "File move"
-example = """<% await tp.file.move("/A/B/" + tp.file.title) %>"""
+example = """<%* await tp.file.move("/A/B/" + tp.file.title) %>"""
 
 [[tp.file.functions.move.examples]]
 name = "File move and rename"
-example = """<% await tp.file.move("/A/B/NewTitle") %>"""
+example = """<%* await tp.file.move("/A/B/NewTitle") %>"""
 
 [tp.file.functions.path]
 name = "path"
@@ -431,11 +431,11 @@ description = "The new file title."
 
 [[tp.file.functions.rename.examples]]
 name = "File rename"
-example = """<% await tp.file.rename("MyNewName") %>"""
+example = """<%* await tp.file.rename("MyNewName") %>"""
 
 [[tp.file.functions.rename.examples]]
 name = "File append a 2 to the file name"
-example = """<% await tp.file.rename(tp.file.title + "2") %>"""
+example = """<%* await tp.file.rename(tp.file.title + "2") %>"""
 
 [tp.file.functions.selection]
 name = "selection"
@@ -534,15 +534,23 @@ description = "If set to `true`, the input field will be a multiline textarea. D
 
 [[tp.system.functions.prompt.examples]]
 name = "Prompt"
-example = """<% tp.system.prompt("Please enter a value") %>"""
+example = """<% await tp.system.prompt("Please enter a value") %>"""
 
 [[tp.system.functions.prompt.examples]]
 name = "Prompt with default value"
-example = """<% tp.system.prompt("What is your mood today?", "happy") %>"""
+example = """<% await tp.system.prompt("What is your mood today?", "happy") %>"""
 
 [[tp.system.functions.prompt.examples]]
 name = "Multiline prompt"
-example = """<% tp.system.prompt("What is your mood today?", null, false, true) %>"""
+example = """<% await tp.system.prompt("What is your mood today?", null, false, true) %>"""
+
+[[tp.system.functions.prompt.examples]]
+name = "Reuse output from prompt"
+example = """<%*
+let value = await tp.system.prompt("Please enter a value");
+%>
+# <% value %>
+selected value: <% value %>"""
 
 [tp.system.functions.suggester]
 name = "suggester"
@@ -571,19 +579,76 @@ description = "Limit the number of items rendered at once (useful to improve per
 
 [[tp.system.functions.suggester.examples]]
 name = "Suggester"
-example = """<% tp.system.suggester(["Happy", "Sad", "Confused"], ["Happy", "Sad", "Confused"]) %>"""
+example = """<% await tp.system.suggester(["Happy", "Sad", "Confused"], ["Happy", "Sad", "Confused"]) %>"""
 
 [[tp.system.functions.suggester.examples]]
 name = "Suggester with mapping function (same as above example)"
-example = """<% tp.system.suggester((item) => item, ["Happy", "Sad", "Confused"]) %>"""
+example = """<% await tp.system.suggester((item) => item, ["Happy", "Sad", "Confused"]) %>"""
 
 [[tp.system.functions.suggester.examples]]
 name = "Suggester for files"
-example = """[[<% (await tp.system.suggester((item) => item.basename, app.vault.getMarkdownFiles())).basename %>]]"""
+example = """[[<% (await tp.system.suggester((item) => item.basename, tp.app.vault.getMarkdownFiles())).basename %>]]"""
 
 [[tp.system.functions.suggester.examples]]
 name = "Suggester for tags"
-example = """<% tp.system.suggester(item => item, Object.keys(app.metadataCache.getTags()).map(x => x.replace("#", ""))) %>"""
+example = """<% await tp.system.suggester(item => item, Object.keys(tp.app.metadataCache.getTags()).map(x => x.replace("#", ""))) %>"""
+
+[[tp.system.functions.suggester.examples]]
+name = "Reuse value from suggester"
+example = """<%*
+let selectedValue = await tp.system.suggester(["Happy", "Sad", "Confused"], ["Happy", "Sad", "Confused"]);
+%>
+# <% selectedValue %>
+selected value: <% selectedValue %>"""
+
+[tp.system.functions.multi_suggester]
+name = "multi_suggester"
+description = "Spawns a suggester prompt that supports selecting multiple items and returns the user's chosen items."
+definition = "tp.system.multi_suggester(text_items: string[] ⎮ ((item: T) => string), items: T[], throw_on_cancel: boolean = false, title: string = \"\", limit?: number = undefined)"
+
+[[tp.system.functions.multi_suggester.args]]
+name = "text_items"
+description = "Array of strings representing the text that will be displayed for each item in the suggester prompt. This can also be a function that maps an item to its text representation."
+
+[[tp.system.functions.multi_suggester.args]]
+name = "items"
+description = "Array containing the values of each item in the correct order."
+
+[[tp.system.functions.multi_suggester.args]]
+name = "throw_on_cancel"
+description = "Throws an error if the prompt is canceled, instead of returning a `null` value."
+
+[[tp.system.functions.multi_suggester.args]]
+name = "title"
+description = "Text placed at the top of the modal."
+
+[[tp.system.functions.multi_suggester.args]]
+name = "limit"
+description = "Limit the number of items rendered at once (useful to improve performance when displaying large lists)."
+
+[[tp.system.functions.multi_suggester.examples]]
+name = "Multi-suggester"
+example = """<% await tp.system.multi_suggester(["Happy", "Sad", "Confused"], ["Happy", "Sad", "Confused"]) %>"""
+
+[[tp.system.functions.multi_suggester.examples]]
+name = "Multi-suggester with mapping function (same as above example)"
+example = """<% await tp.system.multi_suggester((item) => item, ["Happy", "Sad", "Confused"]) %>"""
+
+[[tp.system.functions.multi_suggester.examples]]
+name = "Multi-suggester for files"
+example = """<% (await tp.system.multi_suggester((item) => item.basename, tp.app.vault.getMarkdownFiles())).map(f => `[[${f.basename}]]`) %>"""
+
+[[tp.system.functions.multi_suggester.examples]]
+name = "Multi-suggester for tags"
+example = """<% await tp.system.multi_suggester(item => item, Object.keys(tp.app.metadataCache.getTags()).map(x => x.replace("#", ""))) %>"""
+
+[[tp.system.functions.multi_suggester.examples]]
+name = "Reuse value from multi-suggester"
+example = """<%*
+let selectedValues = await tp.system.multi_suggester(["Happy", "Sad", "Confused"], ["Happy", "Sad", "Confused"]);
+%>
+# <% selectedValues %>
+selected values: <% selectedValues %>"""
 
 [tp.web]
 name = "web"
@@ -596,7 +661,7 @@ definition = "tp.web.daily_quote()"
 
 [[tp.web.functions.daily_quote.examples]]
 name = "Daily quote"
-example = "<% tp.web.daily_quote() %>"
+example = "<% await tp.web.daily_quote() %>"
 
 [tp.web.functions.random_picture]
 name = "random_picture"
@@ -617,15 +682,15 @@ description = "Optional argument to include the specified size in the image link
 
 [[tp.web.functions.random_picture.examples]]
 name = "Random picture"
-example = "<% tp.web.random_picture() %>"
+example = "<% await tp.web.random_picture() %>"
 
 [[tp.web.functions.random_picture.examples]]
 name = "Random picture with size"
-example = """<% tp.web.random_picture("200x200") %>"""
+example = """<% await tp.web.random_picture("200x200") %>"""
 
 [[tp.web.functions.random_picture.examples]]
 name = "Random picture with size and query"
-example = """<% tp.web.random_picture("200x200", "landscape,water") %>"""
+example = """<% await tp.web.random_picture("200x200", "landscape,water") %>"""
 
 [tp.web.functions.request]
 name = "request"
@@ -642,10 +707,10 @@ description = "A path within the response JSON to extract specific data."
 
 [[tp.web.functions.request.examples]]
 name = "Simple request"
-example = """<% tp.web.request("https://jsonplaceholder.typicode.com/todos/1") %>"""
+example = """<% await tp.web.request("https://jsonplaceholder.typicode.com/todos/1") %>"""
 
 [[tp.web.functions.request.examples]]
 name = "Request with path"
-example = """<% tp.web.request("https://jsonplaceholder.typicode.com/todos", "0.title") %>"""
+example = """<% await tp.web.request("https://jsonplaceholder.typicode.com/todos", "0.title") %>"""
 
 

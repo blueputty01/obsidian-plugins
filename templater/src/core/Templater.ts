@@ -1,8 +1,10 @@
 import {
     App,
+    getFrontMatterInfo,
     MarkdownPostProcessorContext,
     MarkdownView,
     normalizePath,
+    stringifyYaml,
     TAbstractFile,
     TFile,
     TFolder,
@@ -13,6 +15,8 @@ import {
     get_active_file,
     get_folder_path_from_file_path,
     resolve_tfile,
+    get_frontmatter_and_content,
+    merge_objects,
 } from "utils/Utils";
 import TemplaterPlugin from "main";
 import {
@@ -254,13 +258,28 @@ export class Templater {
             return;
         }
 
+        const { content, frontmatter } =
+            get_frontmatter_and_content(output_content);
+
         const editor = active_editor.editor;
         const doc = editor.getDoc();
         const oldSelections = doc.listSelections();
-        doc.replaceSelection(output_content);
-        // Refresh editor to ensure properties widget shows after inserting template in blank file
-        if (active_editor.file) {
-            await this.plugin.app.vault.append(active_editor.file, "");
+        doc.replaceSelection(content);
+        if (active_view) {
+            // Merge frontmatter
+            if (
+                Object.keys(frontmatter).length > 0 &&
+                active_view instanceof MarkdownView &&
+                typeof active_view.metadataEditor?.insertProperties ===
+                    "function"
+            ) {
+                active_view.metadataEditor.insertProperties(frontmatter);
+            }
+            // Wait for view to finish rendering properties widget
+            await delay(100);
+            // Save the file to ensure modifications saved to disk by the time `on_all_templates_executed` callback is executed
+            // https://github.com/SilentVoid13/Templater/issues/1569
+            await active_view.save();
         }
         this.plugin.app.workspace.trigger("templater:template-appended", {
             view: active_view,
@@ -283,6 +302,8 @@ export class Templater {
     ): Promise<void> {
         const { path } = file;
         this.start_templater_task(path);
+        const active_view =
+            this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
         const active_editor = this.plugin.app.workspace.activeEditor;
         const active_file = get_active_file(this.plugin.app);
         const running_config = this.create_running_config(
@@ -290,7 +311,7 @@ export class Templater {
             file,
             RunMode.OverwriteFile
         );
-        const output_content = await errorWrapper(
+        let output_content = await errorWrapper(
             async () => this.read_and_parse_template(running_config),
             "Template parsing error, aborting."
         );
@@ -299,16 +320,49 @@ export class Templater {
             await this.end_templater_task(path);
             return;
         }
-        await this.plugin.app.vault.modify(file, output_content);
-        // Set cursor to first line of editor (below properties)
-        // https://github.com/SilentVoid13/Templater/issues/1231
+
+        const {
+            content: output_content_body,
+            frontmatter: output_frontmatter,
+        } = get_frontmatter_and_content(output_content);
         if (
             active_file?.path === file.path &&
             active_editor &&
-            active_editor.editor
+            active_editor.editor &&
+            active_view
         ) {
+            let result = "";
+            const { content, frontmatter } = get_frontmatter_and_content(
+                active_editor.editor.getValue()
+            );
+            merge_objects(frontmatter, output_frontmatter);
+            if (Object.keys(frontmatter).length > 0) {
+                result += `---\n${stringifyYaml(frontmatter)}---\n`;
+            }
+            result += content + output_content_body;
+            active_editor.editor.setValue(result);
+            // Set cursor to first line of editor (below properties)
+            // https://github.com/SilentVoid13/Templater/issues/1231
             const editor = active_editor.editor;
             editor.setSelection({ line: 0, ch: 0 }, { line: 0, ch: 0 });
+            // Wait for view to finish rendering properties widget
+            await delay(100);
+            // Save the file to ensure modifications saved to disk by the time `on_all_templates_executed` callback is executed
+            // https://github.com/SilentVoid13/Templater/issues/1569
+            await active_view.save();
+        } else {
+            await this.plugin.app.vault.process(file, (data) => {
+                let result = "";
+                const { content, frontmatter } =
+                    get_frontmatter_and_content(data);
+                merge_objects(frontmatter, output_frontmatter);
+                if (Object.keys(frontmatter).length > 0) {
+                    result += `---\n${stringifyYaml(frontmatter)}---\n`;
+                }
+                result += content + output_content_body;
+                output_content = result;
+                return result;
+            });
         }
         this.plugin.app.workspace.trigger("templater:new-note-from-template", {
             file,
@@ -488,8 +542,13 @@ export class Templater {
             return;
         }
 
+        const file_content = await app.vault.read(file);
+        const frontmatter_info = getFrontMatterInfo(file_content);
+        const content_size =
+            file_content.length - frontmatter_info.contentStart;
+
         if (
-            file.stat.size == 0 &&
+            content_size == 0 &&
             templater.plugin.settings.enable_folder_templates
         ) {
             const folder_template_match =
@@ -509,7 +568,7 @@ export class Templater {
             }
             await templater.write_template_to_file(template_file, file);
         } else if (
-            file.stat.size == 0 &&
+            content_size == 0 &&
             templater.plugin.settings.enable_file_templates
         ) {
             const file_template_match =
@@ -529,12 +588,13 @@ export class Templater {
             }
             await templater.write_template_to_file(template_file, file);
         } else {
-            if (file.stat.size <= 100000) {
+            const SIZE_LIMIT = 100_000;
+            if (file.stat.size <= SIZE_LIMIT) {
                 //https://github.com/SilentVoid13/Templater/issues/873
                 await templater.overwrite_file_commands(file);
             } else {
                 console.log(
-                    `Templater skipped parsing ${file.path} because file size exceeds 10000`
+                    `Templater skipped parsing ${file.path} because file size exceeds ${SIZE_LIMIT}`
                 );
             }
         }
