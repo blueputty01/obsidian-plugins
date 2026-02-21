@@ -26,11 +26,7 @@ for subtree in "${!subtrees[@]}"; do
   # Pull the changes into the subtree
   git subtree pull --prefix "$subtree" "$subtree" "$branch" --squash
 
-  if [ $? -eq 0 ]; then
-    echo "Subtree '$subtree' updated successfully."
-    echo "Reinstalling '$subtree'..."
-    # ./install.sh "$subtree"
-  else
+  if [ $? -ne 0 ]; then
     echo "Failed to update subtree '$subtree'."
   fi
   echo ""
