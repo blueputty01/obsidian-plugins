@@ -1,0 +1,20 @@
+# Intellij
+*.iml
+.idea
+
+# npm/pnpm/yarn
+node_modules
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# build
+main.js
+styles.css
+*.js.map
+
+# obsidian
+data.json
+
+**/*.map
+src/**/*.js
