@@ -1,16 +1,23 @@
 {
   "name": "consistent-attachments-and-links",
-  "version": "3.24.16",
+  "version": "3.33.1",
   "description": "This plugin ensures the consistency of attachments and links",
   "main": "main.js",
   "scripts": {
     "build": "obsidian-dev-utils build",
+    "build:clean": "obsidian-dev-utils build:clean",
     "build:compile": "obsidian-dev-utils build:compile",
+    "build:compile:svelte": "obsidian-dev-utils build:compile:svelte",
+    "build:compile:typescript": "obsidian-dev-utils build:compile:typescript",
+    "commit": "cz",
     "dev": "obsidian-dev-utils dev",
     "format": "obsidian-dev-utils format",
     "format:check": "obsidian-dev-utils format:check",
     "lint": "obsidian-dev-utils lint",
     "lint:fix": "obsidian-dev-utils lint:fix",
+    "lint:md": "obsidian-dev-utils lint:md",
+    "lint:md:fix": "obsidian-dev-utils lint:md:fix",
+    "prepare": "husky",
     "spellcheck": "obsidian-dev-utils spellcheck",
     "version": "obsidian-dev-utils version"
   },
@@ -18,12 +25,24 @@
   "author": "Dmitry Savosh",
   "license": "MIT",
   "devDependencies": {
-    "@tsconfig/strictest": "^2.0.5",
-    "@types/node": "^22.13.10",
-    "jiti": "^2.4.2",
-    "obsidian": "^1.8.7",
-    "obsidian-dev-utils": "^19.17.5",
-    "obsidian-typings": "^2.36.1"
+    "@commitlint/cli": "latest",
+    "@commitlint/config-conventional": "latest",
+    "@commitlint/types": "latest",
+    "@tsconfig/strictest": "latest",
+    "@types/node": "25.0.3",
+    "commitizen": "latest",
+    "cz-conventional-changelog": "latest",
+    "husky": "latest",
+    "jiti": "latest",
+    "obsidian": "latest",
+    "obsidian-dev-utils": "latest",
+    "obsidian-typings": "obsidian-public-latest"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "@antfu/utils": "9.2.0",
+    "boolean": "npm:dry-uninstall",
+    "dompurify": "3.0.1",
+    "type-fest": "latest"
+  }
 }

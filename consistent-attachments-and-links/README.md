@@ -1,9 +1,10 @@
 # Consistent Attachments and Links
 
 The plugin for [Obsidian](https://obsidian.md/) allows you to reorganize your vault to make it more consistent. Next, the plugin will automatically maintain the consistency of your library.
-<br>
 
-⚠️⚠️⚠️ Be sure to backup your library before using the plugin for the first time! ⚠️⚠️⚠️
+> [!WARNING]
+>
+> As the plugin might change your vault layout, it is crucial that you backup your vault before making any massive changes with this plugin!
 
 ## What's the idea
 
@@ -12,30 +13,33 @@ The idea is to have all links between notes and attachments in strict accordance
 Ideally, all attachments should be located in the note folder or its subfolders. It is not necessary, but in this case, you can easily export a note to a separate folder outside of your vault, knowing that all its attachments are with it. By deleting a note, you will know for sure that you will not delete the attachments you need or leave unnecessary garbage in your library.
 
 If you store attachments in a folder with a note or its subfolders, the plugin will automatically move\delete attachments when you move or delete a note.
-<br>
-
-## Disclaimer
-
-**Please backup your library before using this plugin! Once converted links cannot be converted back.**
-
-**To use this plugin, you will have to give up all the proprietary things that Obsidian uses in the link format.**
 
 Obsidian has a very clever file link search, but this can be a problem for you if you want your notes to be compatible with other programs. This is the main point of the plugin.
 
-If you still want to have link compatibility with some Obsidian features, write a feature request to the [github repository](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/issues) of this plugin.
-<br>
+## Recommended Obsidian settings
 
-## How to configure Obsidian
+The following Obsidian settings are not mandatory but can improve performance and interoperability of your vault.
 
 - To improve performance of certain plugin operations, consider installing [`Backlink Cache`](https://obsidian.md/plugins?id=backlink-cache) plugin.
+- Disabling `[[Wikilinks]]` in favor of `[Markdown Links](Markdown%20Links.md)` makes your vault more compatible with other markdown editors.
 
+![Wikilinks](./images/wikilinks.png)
+
+- Setting `New link format` to `Relative path to file` makes your vault more compatible with other markdown editors.
+
+![New link format](./images/new-link-format.png)
+
+- If you want to use `[Markdown Links](Markdown%20Links.md)` but find those `%20` parts unreadable, consider installing [`Better Markdown Links`](https://obsidian.md/plugins?id=better-markdown-links) plugin.
+
+<!-- markdownlint-disable MD033 -->
 ## `Attachment Subfolder` setting <span id="attachment-subfolder-setting"></span>
+<!-- markdownlint-disable MD033 -->
 
 Starting from [v3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0) `Attachment Subfolder` setting is no longer managed by the plugin.
 
 Currently the plugin relies on built-in Obsidian's [`Default location for new attachment`](https://help.obsidian.md/Editing+and+formatting/Attachments#Change+default+attachment+location) setting.
 
-If you need better control over the attachment folder, consider [`Obsidian Custom Attachment location`](https://obsidian.md/plugins?id=obsidian-custom-attachment-location) plugin.
+If you need better control over the attachment folder, consider installing [`Obsidian Custom Attachment location`](https://obsidian.md/plugins?id=obsidian-custom-attachment-location) plugin.
 
 ## How to check the consistency of the vault
 
@@ -138,8 +142,15 @@ Removes all empty folders in your library.
 
 ## Installation
 
-- The plugin is available in [the official Community Plugins repository](https://obsidian.md/plugins?id=consistent-attachments-and-links).
-- [Beta releases](obsidian://brat?plugin=https://github.com/dy-sh/obsidian-consistent-attachments-and-links) can be installed via [BRAT](https://obsidian.md/plugins?id=obsidian42-brat).
+The plugin is available in [the official Community Plugins repository](https://obsidian.md/plugins?id=consistent-attachments-and-links).
+
+### Beta versions
+
+To install the latest beta release of this plugin (regardless if it is available in [the official Community Plugins repository](https://obsidian.md/plugins) or not), follow these steps:
+
+1. Ensure you have the [BRAT plugin](https://obsidian.md/plugins?id=obsidian42-brat) installed and enabled.
+2. Click [Install via BRAT](https://intradeus.github.io/http-protocol-redirector?r=obsidian://brat?plugin=https://github.com/dy-sh/obsidian-consistent-attachments-and-links).
+3. An Obsidian pop-up window should appear. In the window, click the `Add plugin` button once and wait a few seconds for the plugin to install.
 
 ## Debugging
 
@@ -151,11 +162,13 @@ To show them, run the following command:
 window.DEBUG.enable('consistent-attachments-and-links');
 ```
 
-For more details, refer to the [documentation](https://github.com/mnaoumov/obsidian-dev-utils?tab=readme-ov-file#debugging).
+For more details, refer to the [documentation](https://github.com/mnaoumov/obsidian-dev-utils/blob/main/docs/debugging.md).
 
 ## Support
 
-<a href="https://www.buymeacoffee.com/mnaoumov" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
+<!-- markdownlint-disable MD033 -->
+<a href="https://www.buymeacoffee.com/mnaoumov" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" width="217"></a>
+<!-- markdownlint-enable MD033 -->
 
 ## License
 
