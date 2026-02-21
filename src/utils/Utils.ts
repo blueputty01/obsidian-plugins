@@ -1,11 +1,20 @@
-import { DocBlock, DocNode, DocParamBlock, DocParamCollection, DocPlainText, DocSection, ParserContext, TSDocParser } from "@microsoft/tsdoc";
+import {
+    DocBlock,
+    DocNode,
+    DocParamCollection,
+    DocPlainText,
+    DocSection,
+    TSDocParser,
+} from "@microsoft/tsdoc";
 
 import { TJDocFile, TJDocFileArgument } from "./TJDocFile";
 
 import { TemplaterError } from "./Error";
 import {
     App,
+    getFrontMatterInfo,
     normalizePath,
+    parseYaml,
     TAbstractFile,
     TFile,
     TFolder,
@@ -80,23 +89,21 @@ export async function populate_docs_from_user_scripts(
     app: App,
     files: Array<TFile>
 ): Promise<TJDocFile[]> {
-    const docFiles = await Promise.all(files.map(async file => {
+    const docFiles = await Promise.all(
+        files.map(async (file) => {
             // Get file contents
-            const content = await app.vault.cachedRead(file)
-            
+            const content = await app.vault.cachedRead(file);
+
             const newDocFile = generate_jsdoc(file, content);
-            
+
             return newDocFile;
-        }
-    ));
+        })
+    );
 
     return docFiles;
 }
 
-function generate_jsdoc(
-    file: TFile,
-    content: string
-): TJDocFile{
+function generate_jsdoc(file: TFile, content: string): TJDocFile {
     // Parse the content
     const tsdocParser = new TSDocParser();
     const parsedDoc = tsdocParser.parseString(content);
@@ -104,39 +111,43 @@ function generate_jsdoc(
     // Copy and extract information into the TJDocFile
     const newDocFile = new TJDocFile(file);
 
-    newDocFile.description = generate_jsdoc_description(parsedDoc.docComment.summarySection);
-    newDocFile.returns = generate_jsdoc_return(parsedDoc.docComment.returnsBlock);
-    newDocFile.arguments = generate_jsdoc_arguments(parsedDoc.docComment.params);
+    newDocFile.description = generate_jsdoc_description(
+        parsedDoc.docComment.summarySection
+    );
+    newDocFile.returns = generate_jsdoc_return(
+        parsedDoc.docComment.returnsBlock
+    );
+    newDocFile.arguments = generate_jsdoc_arguments(
+        parsedDoc.docComment.params
+    );
 
-    return newDocFile
+    return newDocFile;
 }
 
-function generate_jsdoc_description(
-    summarySection: DocSection
-) : string {
+function generate_jsdoc_description(summarySection: DocSection): string {
     try {
-        const description = summarySection.nodes.map((node: DocNode) => 
-            node.getChildNodes()
+        const description = summarySection.nodes.map((node: DocNode) =>
+            node
+                .getChildNodes()
                 .filter((node: DocNode) => node instanceof DocPlainText)
                 .map((x: DocPlainText) => x.text)
                 .join("\n")
         );
-    
-        return description.join("\n");   
+
+        return description.join("\n");
     } catch (error) {
-        console.error('Failed to parse sumamry section');
-        throw error;
+        console.error("Failed to parse summary section");
     }
 }
 
-function generate_jsdoc_return(
-    returnSection : DocBlock | undefined
-): string {
+function generate_jsdoc_return(returnSection: DocBlock | undefined): string {
     if (!returnSection) return "";
 
     try {
-        const returnValue = returnSection.content.nodes[0].getChildNodes()[0].text.trim();
-        return returnValue;   
+        const returnValue = returnSection.content.nodes[0]
+            .getChildNodes()[0]
+            .text.trim();
+        return returnValue;
     } catch (error) {
         return "";
     }
@@ -144,18 +155,21 @@ function generate_jsdoc_return(
 
 function generate_jsdoc_arguments(
     paramSection: DocParamCollection
-) : TJDocFileArgument[] {
+): TJDocFileArgument[] {
     try {
         const blocks = paramSection.blocks;
         const args = blocks.map((block) => {
-                const name = block.parameterName;
-                const description = block.content.getChildNodes()[0].getChildNodes()
-                                                    .filter(x => x instanceof DocPlainText)
-                                                    .map(x => x.text).join(" ")
-                return new TJDocFileArgument(name, description);
-            })
+            const name = block.parameterName;
+            const description = block.content
+                .getChildNodes()[0]
+                .getChildNodes()
+                .filter((x) => x instanceof DocPlainText)
+                .map((x) => x.text)
+                .join(" ");
+            return new TJDocFileArgument(name, description);
+        });
 
-        return args;   
+        return args;
     } catch (error) {
         return [];
     }
@@ -212,17 +226,70 @@ export function get_fn_params(func: (...args: unknown[]) => unknown) {
  */
 export function append_bolded_label_with_value_to_parent(
     parent: HTMLElement,
-     title: string,
-     value: string
-): HTMLElement{
-    const tag = parent instanceof HTMLOListElement ? "li" : "p";  
+    title: string,
+    value: string
+): HTMLElement {
+    const tag = parent instanceof HTMLOListElement ? "li" : "p";
 
     const para = parent.createEl(tag);
-    const bold = parent.createEl('b', {text: title});
+    const bold = parent.createEl("b", { text: title });
     para.appendChild(bold);
-    para.appendChild(document.createTextNode(`: ${value}`))
+    para.appendChild(document.createTextNode(`: ${value}`));
 
     // Returns a p or li element
     // Resulting in <b>Title</b>: value
     return para;
+}
+
+/**
+ * Merges two objects recursively. Target object will be modified.
+ * @param target The target object to merge into.
+ * @param source The source object to merge from.
+ */
+export function merge_objects(
+    target: Record<string, unknown>,
+    source: Record<string, unknown>
+) {
+    if (Object.keys(source).length === 0) return;
+    for (const key in source) {
+        if (source.hasOwnProperty(key)) {
+            if (target.hasOwnProperty(key)) {
+                const targetValue = target[key];
+                const sourceValue = source[key];
+                if (Array.isArray(targetValue) || Array.isArray(sourceValue)) {
+                    const targetValueArray = Array.isArray(targetValue)
+                        ? targetValue
+                        : [targetValue];
+                    const sourceValueArray = Array.isArray(sourceValue)
+                        ? sourceValue
+                        : [sourceValue];
+                    target[key] = targetValueArray
+                        .concat(sourceValueArray)
+                        .unique();
+                } else if (is_object(targetValue) && is_object(sourceValue)) {
+                    merge_objects(targetValue, sourceValue);
+                } else if (
+                    sourceValue !== undefined &&
+                    sourceValue !== null &&
+                    sourceValue !== ""
+                ) {
+                    target[key] = sourceValue;
+                }
+            } else {
+                target[key] = source[key];
+            }
+        }
+    }
+}
+
+export function get_frontmatter_and_content(content: string) {
+    let frontmatter: Record<string, unknown> = {};
+    const front_matter_info = getFrontMatterInfo(content);
+    if (front_matter_info.frontmatter) {
+        frontmatter = parseYaml(front_matter_info.frontmatter);
+    }
+    return {
+        frontmatter,
+        content: content.slice(front_matter_info.contentStart),
+    };
 }

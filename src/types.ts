@@ -24,6 +24,10 @@ declare module "obsidian" {
             name: "templater:all-templates-executed",
             callback: () => unknown
         ): EventRef;
+        onLayoutReadyCallbacks?: {
+            pluginId: string;
+            callback: () => void;
+        }[];
     }
 
     interface EventRef {
@@ -43,6 +47,12 @@ declare module "obsidian" {
     interface FoldRange {
         from: number;
         to: number;
+    }
+
+    interface MarkdownView {
+        metadataEditor?: {
+            insertProperties?: (properties: Record<string, unknown>) => void;
+        };
     }
 }
 
