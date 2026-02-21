@@ -1,8 +1,9 @@
-import type { LineAuthorSettings } from "src/lineAuthor/model";
+import type { LineAuthorSettings } from "src/editor/lineAuthor/model";
 
 export interface ObsidianGitSettings {
     commitMessage: string;
     autoCommitMessage: string;
+    commitMessageScript: string;
     commitDateFormat: string;
     /**
      * Interval to either automatically commit-and-sync or just commit
@@ -11,7 +12,9 @@ export interface ObsidianGitSettings {
     autoPushInterval: number;
     autoPullInterval: number;
     autoPullOnBoot: boolean;
+    autoCommitOnlyStaged: boolean;
     syncMethod: SyncMethod;
+    mergeStrategy: MergeStrategy;
     /**
      * Whether to push on commit-and-sync
      */
@@ -20,7 +23,14 @@ export interface ObsidianGitSettings {
      * Whether to pull on commit-and-sync
      */
     pullBeforePush: boolean;
+    /**
+     * Whether messages from {@link ObsidianGit.displayMessage} should be shown
+     */
     disablePopups: boolean;
+    /**
+     * Whether messages from {@link ObsidianGit.displayError} should be shown
+     */
+    showErrorNotices: boolean;
     disablePopupsForNoChanges: boolean;
     listChangedFilesInMessageBody: boolean;
     showStatusBar: boolean;
@@ -56,6 +66,11 @@ export interface ObsidianGitSettings {
     authorInHistoryView: ShowAuthorInHistoryView;
     dateInHistoryView: boolean;
     diffStyle: "git_unified" | "split";
+    hunks: {
+        hunkCommands: boolean;
+        showSigns: boolean;
+        statusBar: "disabled" | "colored" | "monochrome";
+    };
 }
 
 /**
@@ -70,6 +85,8 @@ export function mergeSettingsByPriority(
 }
 
 export type SyncMethod = "rebase" | "merge" | "reset";
+
+export type MergeStrategy = "none" | "ours" | "theirs";
 
 export type ShowAuthorInHistoryView = "full" | "initials" | "hide";
 
@@ -252,10 +269,7 @@ export interface WalkDifference {
     type: "M" | "A" | "D";
 }
 
-export interface UnstagedFile {
-    path: string;
-    deleted: boolean;
-}
+export type UnstagedFile = WalkDifference;
 
 export interface BranchInfo {
     current?: string;
@@ -277,7 +291,7 @@ export type StatusRootTreeItem = RootTreeItem<FileStatusResult>;
 
 export type HistoryRootTreeItem = RootTreeItem<DiffFile>;
 
-export interface DiffViewState {
+export type DiffViewState = {
     /**
      * The repo relative file path for a.
      * For diffing a renamed file, this is the old path.
@@ -298,10 +312,10 @@ export interface DiffViewState {
     /**
      * The git ref to specify which state of that file should be shown.
      * An empty string refers to the index version of a file, so you have to specifically check against undefined.
-     * `undefined` stands for the workign tree version.
+     * `undefined` stands for the working tree version.
      */
     bRef?: string;
-}
+};
 
 export enum FileType {
     staged,
@@ -321,10 +335,19 @@ declare module "obsidian" {
         saveLocalStorage(key: string, value: string | undefined): void;
         openWithDefaultApp(path: string): void;
         getTheme(): "obsidian" | "moonstone";
+        viewRegistry: ViewRegistry;
     }
     interface View {
         titleEl: HTMLElement;
         inlineTitleEl: HTMLElement;
+    }
+    interface ViewRegistry {
+        /**
+         * PRIVATE API
+         *
+         * Returns the view type for the given extension if available.
+         */
+        getTypeByExtension(extension: string): string;
     }
     interface Workspace {
         /**

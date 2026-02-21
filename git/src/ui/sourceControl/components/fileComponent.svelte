@@ -1,11 +1,12 @@
 <script lang="ts">
     import { setIcon, TFile } from "obsidian";
-    import { hoverPreview } from "obsidian-community-lib";
+    import { hoverPreview } from "src/utils";
     import type { GitManager } from "src/gitManager/gitManager";
     import type { FileStatusResult } from "src/types";
     import { DiscardModal } from "src/ui/modals/discardModal";
     import {
         fileIsBinary,
+        fileOpenableInObsidian,
         getDisplayPath,
         getNewLeaf,
         mayTriggerFileMenu,
@@ -42,7 +43,7 @@
     function hover(event: MouseEvent) {
         //Don't show previews of config- or hidden files.
         if (view.app.vault.getAbstractFileByPath(change.vaultPath)) {
-            hoverPreview(event, view, change.vaultPath);
+            hoverPreview(view.app, event, view, change.vaultPath);
         }
     }
 
@@ -79,26 +80,36 @@
     function discard(event: MouseEvent) {
         event.stopPropagation();
         const deleteFile = change.workingDir == "U";
-        new DiscardModal(view.app, deleteFile, change.vaultPath).myOpen().then(
-            (shouldDiscard) => {
-                if (shouldDiscard === true) {
-                    if (deleteFile) {
-                        return view.app.vault.adapter
-                            .remove(change.vaultPath)
-                            .finally(() => {
-                                view.app.workspace.trigger(
-                                    "obsidian-git:refresh"
-                                );
-                            });
-                    } else {
-                        return manager.discard(change.path).finally(() => {
+        new DiscardModal({
+            app: view.app,
+            filesToDeleteCount: deleteFile ? 1 : 0,
+            filesToDiscardCount: deleteFile ? 0 : 1,
+            path: change.vaultPath,
+        })
+            .openAndGetResult()
+            .then(
+                async (result) => {
+                    if (result == "delete") {
+                        const tFile = view.app.vault.getAbstractFileByPath(
+                            change.vaultPath
+                        );
+                        if (tFile instanceof TFile) {
+                            await view.app.fileManager.trashFile(tFile);
+                        } else {
+                            await view.app.vault.adapter.remove(
+                                change.vaultPath
+                            );
+                        }
+                    } else if (result == "discard") {
+                        await manager.discard(change.path).finally(() => {
                             view.app.workspace.trigger("obsidian-git:refresh");
                         });
                     }
-                }
-            },
-            (e) => view.plugin.displayError(e)
-        );
+
+                    view.app.workspace.trigger("obsidian-git:refresh");
+                },
+                (e) => view.plugin.displayError(e)
+            );
     }
 </script>
 
@@ -141,7 +152,7 @@
         </div>
         <div class="git-tools">
             <div class="buttons">
-                {#if view.app.vault.getAbstractFileByPath(change.vaultPath) instanceof TFile}
+                {#if fileOpenableInObsidian(change.vaultPath, view.app)}
                     <div
                         data-icon="go-to-file"
                         aria-label="Open File"
@@ -172,11 +183,3 @@
         </div>
     </div>
 </main>
-
-<style lang="scss">
-    main {
-        .nav-file-title {
-            align-items: center;
-        }
-    }
-</style>

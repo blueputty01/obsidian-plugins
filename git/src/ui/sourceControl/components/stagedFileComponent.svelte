@@ -1,10 +1,11 @@
 <script lang="ts">
     import { setIcon, TFile } from "obsidian";
-    import { hoverPreview } from "obsidian-community-lib";
+    import { hoverPreview } from "src/utils";
     import type { GitManager } from "src/gitManager/gitManager";
     import type { FileStatusResult } from "src/types";
     import {
         fileIsBinary,
+        fileOpenableInObsidian,
         getDisplayPath,
         getNewLeaf,
         mayTriggerFileMenu,
@@ -40,7 +41,7 @@
     function hover(event: MouseEvent) {
         //Don't show previews of config- or hidden files.
         if (view.app.vault.getFileByPath(change.vaultPath)) {
-            hoverPreview(event, view, change.vaultPath);
+            hoverPreview(view.app, event, view, change.vaultPath);
         }
     }
 
@@ -57,7 +58,8 @@
     function showDiff(event: MouseEvent) {
         event.stopPropagation();
         view.plugin.tools.openDiff({
-            aFile: change.path,
+            aFile: change.from ?? change.path,
+            bFile: change.path,
             aRef: "HEAD",
             bRef: "",
             event,
@@ -108,7 +110,7 @@
         </div>
         <div class="git-tools">
             <div class="buttons">
-                {#if view.app.vault.getAbstractFileByPath(change.vaultPath) instanceof TFile}
+                {#if fileOpenableInObsidian(change.vaultPath, view.app)}
                     <div
                         data-icon="go-to-file"
                         aria-label="Open File"
@@ -129,11 +131,3 @@
         </div>
     </div>
 </main>
-
-<style lang="scss">
-    main {
-        .nav-file-title {
-            align-items: center;
-        }
-    }
-</style>
