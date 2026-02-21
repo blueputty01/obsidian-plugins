@@ -5,7 +5,6 @@
     import type ObsidianGit from "src/main";
     import type { StatusRootTreeItem, TreeItem } from "src/types";
     import { FileType } from "src/types";
-    import { DiscardModal } from "src/ui/modals/discardModal";
     import { slide } from "svelte/transition";
     import type GitView from "../sourceControl";
     import FileComponent from "./fileComponent.svelte";
@@ -13,12 +12,14 @@
     import StagedFileComponent from "./stagedFileComponent.svelte";
     import { arrayProxyWithNewLength, mayTriggerFileMenu } from "src/utils";
     import TooManyFilesComponent from "./tooManyFilesComponent.svelte";
+    import { onMount } from "svelte";
     interface Props {
         hierarchy: StatusRootTreeItem;
         plugin: ObsidianGit;
         view: GitView;
         fileType: FileType;
         topLevel?: boolean;
+        closed: Record<string, boolean>;
     }
 
     let {
@@ -27,12 +28,15 @@
         view,
         fileType,
         topLevel = false,
+        closed = $bindable(),
     }: Props = $props();
-    const closed: Record<string, boolean> = $state({});
 
-    for (const entity of hierarchy.children) {
-        closed[entity.title] = (entity.children?.length ?? 0) > 100;
-    }
+    onMount(() => {
+        for (const entity of hierarchy.children) {
+            if ((entity.children?.length ?? 0) > 100)
+                closed[entity.title] = true;
+        }
+    });
     /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
     let side = $derived(
         (view.leaf.getRoot() as any).side == "left" ? "right" : "left"
@@ -58,24 +62,11 @@
     }
     function discard(event: MouseEvent, item: TreeItem) {
         event.stopPropagation();
-        new DiscardModal(view.app, false, item.vaultPath).myOpen().then(
-            (shouldDiscard) => {
-                if (shouldDiscard === true) {
-                    return plugin.gitManager
-                        .discardAll({
-                            dir: item.path,
-                            status: plugin.cachedStatus,
-                        })
-                        .finally(() => {
-                            view.app.workspace.trigger("obsidian-git:refresh");
-                        });
-                }
-            },
-            (e) => plugin.displayError(e)
-        );
+        void plugin.discardAll(item.vaultPath);
     }
-    function fold(item: TreeItem) {
-        closed[item.title] = !closed[item.title];
+    function fold(event: MouseEvent, item: TreeItem) {
+        event.stopPropagation();
+        closed[item.path] = !closed[item.path];
     }
 </script>
 
@@ -103,7 +94,7 @@
             </div>
         {:else}
             <div
-                onclick={() => fold(entity)}
+                onclick={(event) => fold(event, entity)}
                 onauxclick={(event) =>
                     mayTriggerFileMenu(
                         view.app,
@@ -113,7 +104,7 @@
                         "git-source-control"
                     )}
                 class="tree-item nav-folder"
-                class:is-collapsed={closed[entity.title]}
+                class:is-collapsed={closed[entity.path]}
             >
                 <div
                     class="tree-item-self is-clickable nav-folder-title"
@@ -126,7 +117,7 @@
                     ></div>
                     <div
                         class="tree-item-icon nav-folder-collapse-indicator collapse-icon"
-                        class:is-collapsed={closed[entity.title]}
+                        class:is-collapsed={closed[entity.path]}
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -232,7 +223,7 @@
                     </div>
                 </div>
 
-                {#if !closed[entity.title]}
+                {#if !closed[entity.path]}
                     <div
                         class="tree-item-children nav-folder-children"
                         transition:slide|local={{ duration: 150 }}
@@ -242,6 +233,7 @@
                             {plugin}
                             {view}
                             {fileType}
+                            bind:closed
                         />
                     </div>
                 {/if}
@@ -251,11 +243,3 @@
 
     <TooManyFilesComponent files={hierarchy.children} />
 </main>
-
-<style lang="scss">
-    main {
-        .nav-folder-title {
-            align-items: center;
-        }
-    }
-</style>

@@ -25,6 +25,7 @@ import { GeneralModal } from "../ui/modals/generalModal";
 import { splitRemoteBranch, worthWalking } from "../utils";
 import { GitManager } from "./gitManager";
 import { MyAdapter } from "./myAdapter";
+import diff3Merge from "diff3";
 
 export class IsomorphicGit extends GitManager {
     private readonly FILE = 0;
@@ -88,6 +89,7 @@ export class IsomorphicGit extends GitManager {
                     const password = await new GeneralModal(this.plugin, {
                         placeholder:
                             "Specify your password/personal access token",
+                        obscure: true,
                     }).openAndGetResult();
                     if (password) {
                         this.plugin.localStorage.setUsername(username);
@@ -111,7 +113,7 @@ export class IsomorphicGit extends GitManager {
                     // because that's what requestUrl expects
                     let collectedBody: ArrayBuffer | undefined;
                     if (body) {
-                        collectedBody = (await collect(body)).buffer;
+                        collectedBody = await asyncIteratorToArrayBuffer(body);
                     }
 
                     const res = await requestUrl({
@@ -121,11 +123,12 @@ export class IsomorphicGit extends GitManager {
                         body: collectedBody,
                         throw: false,
                     });
+
                     return {
                         url,
                         method,
                         headers: res.headers,
-                        body: [new Uint8Array(res.arrayBuffer)],
+                        body: arrayBufferToAsyncIterator(res.arrayBuffer),
                         statusCode: res.status,
                         statusMessage: res.status.toString(),
                     };
@@ -145,7 +148,7 @@ export class IsomorphicGit extends GitManager {
         }
     }
 
-    async status(): Promise<Status> {
+    async status(opts?: { path?: string }): Promise<Status> {
         let notice: Notice | undefined;
         const timeout = window.setTimeout(() => {
             notice = new Notice(
@@ -155,21 +158,34 @@ export class IsomorphicGit extends GitManager {
         }, 20000);
         try {
             this.plugin.setPluginState({ gitAction: CurrentGitAction.status });
+            const statusOpts = { ...this.getRepo() } as Parameters<
+                typeof git.statusMatrix
+            >[0];
+            if (opts?.path != undefined) {
+                statusOpts.filepaths = [`${opts.path}/`];
+            }
             const status = (
-                await this.wrapFS(git.statusMatrix({ ...this.getRepo() }))
+                await this.wrapFS(git.statusMatrix(statusOpts))
             ).map((row) => this.getFileStatusResult(row));
 
-            const changed = status.filter(
-                (fileStatus) => fileStatus.workingDir !== " "
-            );
-            const staged = status.filter(
-                (fileStatus) =>
-                    fileStatus.index !== " " && fileStatus.index !== "U"
-            );
+            const changed: FileStatusResult[] = [];
+            const staged: FileStatusResult[] = [];
+            const all: FileStatusResult[] = [];
+            for (const file of status) {
+                if (file.workingDir !== " ") {
+                    changed.push(file);
+                }
+                if (file.index !== " " && file.index !== "U") {
+                    staged.push(file);
+                }
+                if (file.index != " " || file.workingDir != " ") {
+                    all.push(file);
+                }
+            }
             const conflicted: string[] = [];
             window.clearTimeout(timeout);
             notice?.hide();
-            return { all: status, changed, staged, conflicted };
+            return { all, changed, staged, conflicted };
         } catch (error) {
             window.clearTimeout(timeout);
             notice?.hide();
@@ -286,8 +302,8 @@ export class IsomorphicGit extends GitManager {
                 const filesToStage =
                     unstagedFiles ?? (await this.getUnstagedFiles(dir ?? "."));
                 await Promise.all(
-                    filesToStage.map(({ path, deleted }) =>
-                        deleted
+                    filesToStage.map(({ path, type }) =>
+                        type == "D"
                             ? git.remove({ ...this.getRepo(), filepath: path })
                             : this.wrapFS(
                                   git.add({ ...this.getRepo(), filepath: path })
@@ -369,13 +385,20 @@ export class IsomorphicGit extends GitManager {
         if (status) {
             if (dir != undefined) {
                 files = status.changed
-                    .filter((file) => file.path.startsWith(dir))
+                    .filter(
+                        (file) =>
+                            file.workingDir != "U" && file.path.startsWith(dir)
+                    )
                     .map((file) => file.path);
             } else {
-                files = status.changed.map((file) => file.path);
+                files = status.changed
+                    .filter((file) => file.workingDir != "U")
+                    .map((file) => file.path);
             }
         } else {
-            files = (await this.getUnstagedFiles(dir)).map(({ path }) => path);
+            files = (await this.getUnstagedFiles(dir))
+                .filter((file) => file.type != "A")
+                .map(({ path }) => path);
         }
 
         try {
@@ -390,6 +413,34 @@ export class IsomorphicGit extends GitManager {
             this.plugin.displayError(error);
             throw error;
         }
+    }
+
+    async getUntrackedPaths(opts: {
+        path?: string;
+        status?: Status;
+    }): Promise<string[]> {
+        const untrackedPaths: string[] = [];
+        if (opts.status) {
+            for (const file of opts.status.changed) {
+                if (
+                    file.index == "U" &&
+                    file.workingDir === "U" &&
+                    file.path.startsWith(
+                        opts.path != undefined ? `${opts.path}/` : ""
+                    )
+                ) {
+                    untrackedPaths.push(file.path);
+                }
+            }
+        } else {
+            const status = await this.status({ path: opts?.path });
+            for (const file of status.changed) {
+                if (file.index === "U" && file.workingDir === "U") {
+                    untrackedPaths.push(file.path);
+                }
+            }
+        }
+        return untrackedPaths;
     }
 
     getProgressText(action: string, event: GitProgressEvent): string {
@@ -427,6 +478,37 @@ export class IsomorphicGit extends GitManager {
                     ours: branchInfo.current,
                     theirs: branchInfo.tracking!,
                     abortOnConflict: false,
+                    mergeDriver:
+                        this.plugin.settings.mergeStrategy !== "none"
+                            ? ({ contents }) => {
+                                  const baseContent = contents[0];
+                                  const ourContent = contents[1];
+                                  const theirContent = contents[2];
+
+                                  const LINEBREAKS = /^.*(\r?\n|$)/gm;
+                                  const ours =
+                                      ourContent.match(LINEBREAKS) ?? [];
+                                  const base =
+                                      baseContent.match(LINEBREAKS) ?? [];
+                                  const theirs =
+                                      theirContent.match(LINEBREAKS) ?? [];
+                                  const result = diff3Merge(ours, base, theirs);
+                                  let mergedText = "";
+                                  for (const item of result) {
+                                      if (item.ok) {
+                                          mergedText += item.ok.join("");
+                                      }
+                                      if (item.conflict) {
+                                          mergedText +=
+                                              this.plugin.settings
+                                                  .mergeStrategy === "ours"
+                                                  ? item.conflict.a.join("")
+                                                  : item.conflict.b.join("");
+                                      }
+                                  }
+                                  return { cleanMerge: true, mergedText };
+                              }
+                            : undefined,
                 })
             );
             if (!mergeRes.alreadyMerged) {
@@ -490,10 +572,12 @@ export class IsomorphicGit extends GitManager {
             ).length;
 
             this.plugin.setPluginState({ gitAction: CurrentGitAction.push });
+            const remote = await this.getCurrentRemote();
 
             await this.wrapFS(
                 git.push({
                     ...this.getRepo(),
+                    remote,
                     onProgress: (progress) => {
                         if (progressNotice !== undefined) {
                             progressNotice.noticeEl.innerText =
@@ -1007,14 +1091,20 @@ export class IsomorphicGit extends GitManager {
                         if (!workdirOid) {
                             return {
                                 path: filepath,
-                                deleted: true,
+                                type: "D",
+                            };
+                        }
+                        if (!stageOid) {
+                            return {
+                                path: filepath,
+                                type: "A",
                             };
                         }
 
                         if (workdirOid !== stageOid) {
                             return {
                                 path: filepath,
-                                deleted: false,
+                                type: "M",
                             };
                         }
                         return null;
@@ -1204,42 +1294,24 @@ function fromValue(value: any) {
     };
 }
 
-function getIterator(iterable: any) {
-    if (iterable[Symbol.asyncIterator]) {
-        return iterable[Symbol.asyncIterator]();
-    }
-    if (iterable[Symbol.iterator]) {
-        return iterable[Symbol.iterator]();
-    }
-    if (iterable.next) {
-        return iterable;
-    }
-    return fromValue(iterable);
+async function* arrayBufferToAsyncIterator(
+    buffer: ArrayBuffer
+): AsyncIterableIterator<Uint8Array> {
+    yield new Uint8Array(buffer);
 }
 
-async function forAwait(iterable: any, cb: any) {
-    const iter = getIterator(iterable);
-    while (true) {
-        const { value, done } = await iter.next();
-        if (value) await cb(value);
-        if (done) break;
-    }
-    if (iter.return) iter.return();
-}
-
-async function collect(iterable: any): Promise<Uint8Array> {
-    let size = 0;
-    const buffers: Uint8Array[] = [];
-    // This will be easier once `for await ... of` loops are available.
-    await forAwait(iterable, (value: any) => {
-        buffers.push(value);
-        size += value.byteLength;
+async function asyncIteratorToArrayBuffer(
+    iterator: AsyncIterableIterator<Uint8Array>
+): Promise<ArrayBuffer> {
+    const stream = new ReadableStream({
+        async start(controller) {
+            for await (const chunk of iterator) {
+                controller.enqueue(chunk);
+            }
+            controller.close();
+        },
     });
-    const result = new Uint8Array(size);
-    let nextIndex = 0;
-    for (const buffer of buffers) {
-        result.set(buffer, nextIndex);
-        nextIndex += buffer.byteLength;
-    }
-    return result;
+
+    const response = new Response(stream);
+    return await response.arrayBuffer();
 }

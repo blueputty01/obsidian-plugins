@@ -1,6 +1,6 @@
 import { GutterMarker } from "@codemirror/view";
 import { sha256 } from "js-sha256";
-import { moment } from "obsidian";
+import { moment, setTooltip } from "obsidian";
 import { DATE_FORMAT, DATE_TIME_FORMAT_MINUTES } from "src/constants";
 import type {
     LineAuthorDateTimeFormatOptions,
@@ -8,18 +8,18 @@ import type {
     LineAuthorSettings,
     LineAuthorTimezoneOption,
     LineAuthoring,
-} from "src/lineAuthor/model";
-import { latestSettings } from "src/lineAuthor/model";
+} from "src/editor/lineAuthor/model";
+import { latestSettings } from "src/editor/lineAuthor/model";
 import {
     attachedGutterElements,
     conditionallyUpdateLongestRenderedGutter,
     getLongestRenderedGutter,
     gutterInstances,
     recordRenderedAgeInDays,
-} from "src/lineAuthor/view/cache";
-import { enrichCommitInfoForContextMenu } from "src/lineAuthor/view/contextMenu";
-import { coloringBasedOnCommitAge } from "src/lineAuthor/view/gutter/coloring";
-import { chooseNewestCommit } from "src/lineAuthor/view/gutter/commitChoice";
+} from "src/editor/lineAuthor/view/cache";
+import { enrichCommitInfoForContextMenu } from "src/editor/lineAuthor/view/contextMenu";
+import { coloringBasedOnCommitAge } from "src/editor/lineAuthor/view/gutter/coloring";
+import { chooseNewestCommit } from "src/editor/lineAuthor/view/gutter/commitChoice";
 import type { BlameCommit } from "src/types";
 import {
     impossibleBranch,
@@ -55,7 +55,9 @@ export class TextGutter extends GutterMarker {
     }
 
     destroy(dom: HTMLElement): void {
-        if (!document.body.contains(dom)) dom.remove();
+        if (!dom) {
+            return; // sometimes, it doesn't exist anymore.
+        }
     }
 }
 
@@ -115,9 +117,12 @@ export class LineAuthoringGutter extends GutterMarker {
     }
 
     public destroy(dom: HTMLElement): void {
+        if (!dom) {
+            return; // sometimes, it doesn't exist anymore.
+        }
+
         // this is called frequently, when the gutter moves outside of the view.
         if (!document.body.contains(dom)) {
-            dom.remove();
             attachedGutterElements.delete(dom);
         }
     }
@@ -165,7 +170,7 @@ export class LineAuthoringGutter extends GutterMarker {
     ) {
         const templateElt = window.createDiv();
 
-        templateElt.innerText = text;
+        templateElt.setText(text);
 
         const { color, daysSinceCommit } = coloringBasedOnCommitAge(
             commit?.author?.epochSeconds,
@@ -174,6 +179,14 @@ export class LineAuthoringGutter extends GutterMarker {
         );
 
         templateElt.style.backgroundColor = color;
+
+        templateElt.setAttribute("data-author", commit?.author?.name ?? "");
+        templateElt.setAttribute(
+            "data-author-email",
+            commit?.author?.email ?? ""
+        );
+
+        setTooltip(templateElt, commit?.summary ?? "");
 
         enrichCommitInfoForContextMenu(commit, isWaitingGutter, templateElt);
 
@@ -392,7 +405,7 @@ export function lineAuthoringGutterMarker(
     options?: "waiting-for-result"
 ) {
     const digest = sha256.create();
-    digest.update(Object.values(settings).join(","));
+    digest.update(JSON.stringify(settings));
     digest.update(`s${startLine}-e${endLine}-k${key}-o${options}`);
 
     const cacheKey = digest.hex();

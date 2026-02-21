@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { setIcon, type EventRef } from "obsidian";
+    import { setIcon } from "obsidian";
     import { SimpleGit } from "src/gitManager/simpleGit";
     import type ObsidianGit from "src/main";
     import type { LogEntry } from "src/types";
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import LogComponent from "./components/logComponent.svelte";
     import type HistoryView from "./historyView";
 
@@ -17,7 +17,6 @@
     let buttons: HTMLElement[] = $state([]);
     let logs: LogEntry[] | undefined = $state();
     let showTree: boolean = $state(plugin.settings.treeStructure);
-    let refreshRef: EventRef;
 
     let layoutBtn: HTMLElement | undefined = $state();
 
@@ -27,17 +26,17 @@
         }
     });
 
-    refreshRef = view.app.workspace.on(
-        "obsidian-git:head-change",
-        () => void refresh().catch(console.error)
-    );
+    onMount(() => {
+        view.registerEvent(
+            view.app.workspace.on(
+                "obsidian-git:head-change",
+                () => void refresh().catch(console.error)
+            )
+        );
+    });
 
     $effect(() => {
         buttons.forEach((btn) => setIcon(btn, btn.getAttr("data-icon")!));
-    });
-
-    onDestroy(() => {
-        view.app.workspace.offref(refreshRef);
     });
 
     onMount(() => {
@@ -101,7 +100,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<main>
+<main class="git-view">
     <div class="nav-header">
         <div class="nav-buttons-container">
             <div
@@ -123,7 +122,6 @@
                 class:loading
                 data-icon="refresh-cw"
                 aria-label="Refresh"
-                style="margin: 1px;"
                 bind:this={buttons[1]}
                 onclick={triggerRefresh}
             ></div>
@@ -138,10 +136,10 @@
                 {/each}
             </div>
         {/if}
+        <div id="sentinel"></div>
+        <!-- Ensure that the sentinel item is reachable with the overlaying status bar and indicate that the end of the list is reached  -->
+        <div style="margin-bottom:40px"></div>
     </div>
-    <div id="sentinel"></div>
-    <!-- Ensure that the sentinel item is reachable with the overlaying status bar and indicate that the end of the list is reached  -->
-    <div style="margin-bottom:40px"></div>
 </main>
 
 <style lang="scss">
