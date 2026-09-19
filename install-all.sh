@@ -1,29 +1,16 @@
 #!/bin/bash
-set -e
-set -o pipefail
+set -euo pipefail
 
-export OBSIDIAN_DIR=$obsidian/.obsidian
-./install.sh auto-link-title
-./install.sh consistent-attachments-and-links
-./install.sh git
-./install.sh quick-explorer
-./install.sh templater
-./install.sh vimrc
-./install.sh kanban
-./install.sh quickadd
-./install.sh math-ocr
-./install.sh unlinked
-./install.sh copy-as-html
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-export OBSIDIAN_DIR=$class_notes/.obsidian
-./install.sh auto-link-title
-./install.sh consistent-attachments-and-links
-./install.sh git
-./install.sh quick-explorer
-./install.sh templater
-./install.sh vimrc
-./install.sh kanban
-./install.sh quickadd
-./install.sh math-ocr
-./install.sh unlinked
-./install.sh copy-as-html
+install_for_vault() {
+	local vault_dir="$1"
+	local plugin
+
+	while IFS= read -r plugin; do
+		OBSIDIAN_DIR="$vault_dir/.obsidian" "$REPO_DIR/install.sh" "$plugin"
+	done < <("$REPO_DIR/install.sh" --list)
+}
+
+install_for_vault "${obsidian:?Error: obsidian environment variable is not set}"
+install_for_vault "${class_notes:?Error: class_notes environment variable is not set}"

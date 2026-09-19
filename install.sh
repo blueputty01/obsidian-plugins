@@ -1,164 +1,108 @@
 #!/bin/bash
-set -e
-set -o pipefail
+set -euo pipefail
 
-if [ -z "$OBSIDIAN_DIR" ]; then
-  echo "Error: OBSIDIAN_DIR environment variable is not set. Defaulting to \$obsidian/.obsidian"
-  export OBSIDIAN_DIR=$obsidian/.obsidian
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLUGINS=(
+  advanced-rename-and-delete-handler
+  auto-link-title
+  copy-as-html
+  git
+  math-ocr
+  # protect-files
+  quick-explorer
+  quickadd
+  templater
+  unlinked
+  vimrc
+)
+
+if [ "$#" -eq 1 ] && [ "$1" = "--list" ]; then
+  printf '%s\n' "${PLUGINS[@]}"
+  exit 0
 fi
 
-install_auto-link-title() {
-  cd auto-link-title
-  npm i
-  npm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/auto-link-title
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
+if [ -z "${OBSIDIAN_DIR:-}" ]; then
+  echo "Error: OBSIDIAN_DIR environment variable is not set. Defaulting to \$obsidian/.obsidian"
+  OBSIDIAN_DIR="$obsidian/.obsidian"
+fi
+
+install_dependencies() {
+  if [ -f bun.lockb ]; then
+    bun install
+  elif [ -f pnpm-lock.yaml ]; then
+    pnpm install
+  elif [ -f yarn.lock ]; then
+    yarn install
+  else
+    npm install
+  fi
 }
 
-install_consistent-attachments-and-links() {
-  cd consistent-attachments-and-links
-  npm i
-  npm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/consistent-attachments-and-links
-  mkdir -p $PLUGIN_DIR
-  mv dist/build/* $PLUGIN_DIR
-  cd ../
+copy_artifacts() {
+  local plugin_id="$1"
+  local target_dir="$OBSIDIAN_DIR/plugins/$plugin_id"
+  local artifact source
+  local artifacts=(main.js styles.css)
+
+  mkdir -p "$target_dir"
+  for artifact in "${artifacts[@]}"; do
+    for source in "$artifact" "dist/$artifact" "dist/build/$artifact"; do
+      if [ -f "$source" ]; then
+        cp "$source" "$target_dir/$artifact"
+        break
+      fi
+    done
+  done
+  cp manifest.json "$target_dir/manifest.json"
 }
 
-install_copy-as-html() {
-  cd copy-as-html
-  npm i
-  npm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/copy-as-html
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cp styles.css $PLUGIN_DIR
-  cd ../
-}
+install_plugin() {
+  local plugin="$1"
+  local plugin_dir="$REPO_DIR/$plugin"
+  local plugin_id
 
-install_git() {
-  cd git
-  pnpm i
-  pnpm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/obsidian-git
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  cp styles.css $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
-}
+  if [ ! -f "$plugin_dir/package.json" ] || [ ! -f "$plugin_dir/manifest.json" ]; then
+    echo "Error: '$plugin' is not an installable plugin directory."
+    return 1
+  fi
 
-install_kanban() {
-  cd kanban
-  yarn
-  yarn build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/kanban
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  mv styles.css $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
-}
+  plugin_id="$(sed -nE 's/^[[:space:]]*"id"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$plugin_dir/manifest.json" | head -n 1)"
+  if [ -z "$plugin_id" ]; then
+    echo "Error: Could not read plugin ID from '$plugin/manifest.json'."
+    return 1
+  fi
 
-install_math-ocr() {
-  cd math-ocr
-  npm i
-  npm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/math-ocr
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
-}
-
-install_protect-files() {
-  cd protect-files
-  npm i
-  npm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/protect-files
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
-}
-
-install_quick-explorer() {
-  cd quick-explorer
-  pnpm i
-  pnpm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/quick-explorer
-  mkdir -p $PLUGIN_DIR
-  mv dist/* $PLUGIN_DIR
-  cd ../
-}
-
-install_quickadd() {
-  cd quickadd
-  bun install
-  bun run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/quickadd
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  mv styles.css $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
-}
-
-install_templater() {
-  cd templater
-  pnpm i
-  pnpm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/templater
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  cp styles.css $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
-}
-
-install_unlinked() {
-  cd unlinked
-  npm i
-  npm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/unlinked
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
-}
-
-install_vimrc() {
-  cd vimrc
-  npm i
-  npm run build
-  PLUGIN_DIR=$OBSIDIAN_DIR/plugins/vimrc
-  mkdir -p $PLUGIN_DIR
-  mv main.js $PLUGIN_DIR
-  cp manifest.json $PLUGIN_DIR
-  cd ../
+  (
+    cd "$plugin_dir"
+    install_dependencies
+    npm run build
+    copy_artifacts "$plugin_id"
+  )
 }
 
 usage() {
-  echo "Usage: $0 [plugin-name]"
+  echo "Usage: $0 <plugin-name>"
+  echo "       $0 --list"
   echo "Available plugins:"
-  compgen -A function install_ | sed 's/install_//'
+  printf '  %s\n' "${PLUGINS[@]}"
   exit 1
 }
 
-if [ -z "$1" ]; then
+if [ "$#" -eq 1 ] && [ "$1" = "--list" ]; then
+  printf '%s\n' "${PLUGINS[@]}"
+  exit 0
+fi
+
+if [ "$#" -ne 1 ]; then
   usage
 fi
 
-case "$1" in
-  auto-link-title|consistent-attachments-and-links|copy-as-html|git|kanban|math-ocr|protect-files|quick-explorer|quickadd|remotely-save|templater|unlinked|vimrc)
-    "install_$1"
-    ;;
-  *)
-    echo "Error: Unknown plugin '$1'"
-    usage
-    ;;
-esac
+for plugin in "${PLUGINS[@]}"; do
+  if [ "$plugin" = "$1" ]; then
+    install_plugin "$plugin"
+    exit 0
+  fi
+done
+
+echo "Error: Unknown plugin '$1'"
+usage
